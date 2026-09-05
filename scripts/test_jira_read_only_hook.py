@@ -1,6 +1,7 @@
 """Offline policy tests: inputs are data, no Jira command is ever executed."""
 
 import json
+import shlex
 from pathlib import Path
 import subprocess
 import sys
@@ -19,6 +20,210 @@ class PolicyTest(unittest.TestCase):
 
     def blocked(self, result):
         return result.get("hookSpecificOutput", {}).get("permissionDecision") == "deny"
+
+    def test_marker_bearing_local_commands_pass(self):
+        commands = [
+            "GOCACHE=/tmp/race-cache.OXebML GOBIN=/tmp/install-smoke.v1zeDx go install ./cmd/jiractl",
+            "gofmt -w internal/cli cmd/jiractl/main_test.go",
+            "mktemp -d /tmp/jiractl-race-cache.XXXXXX",
+        ]
+        for command in commands:
+            with self.subTest(command=command):
+                self.assertEqual({}, self.decision("exec_command", {"cmd": command}))
+
+    def test_commit_gate_is_a_scoped_local_check(self):
+        helper = "/home/avi/.agents/skills/prepare-repo-commit/scripts/check_git_commit_gate.py"
+        base = f"python3 {helper} --repo-root {ROOT}"
+        for suffix in (
+            "", " --json", " --branch chore/read-only-development-hooks --json",
+            " --commit-subject 'fix(hooks): classify Jira path arguments' --json",
+        ):
+            with self.subTest(suffix=suffix):
+                self.assertEqual({}, self.decision("exec_command", {"cmd": base + suffix}))
+
+    def test_staging_hook_files_is_local_and_exact(self):
+        base = "git add -- scripts/jira_read_only_hook.py scripts/test_jira_read_only_hook.py"
+        self.assertEqual({}, self.decision("exec_command", {"cmd": base}))
+        for command in (
+            base + " README.md", base.replace("add --", "add -A --"),
+            base.replace("git add", "git -c alias.add=anything add"),
+            "GIT_DIR=/tmp/synthetic " + base,
+            base + " && jiractl change apply p_synthetic",
+            base + " $(jiractl change apply p_synthetic)",
+        ):
+            with self.subTest(command=command):
+                self.assertTrue(self.blocked(self.decision("exec_command", {"cmd": command})))
+        self.assertTrue(self.blocked(hook.evaluate({
+            "cwd": "/tmp", "hook_event_name": "PreToolUse", "tool_name": "exec_command",
+            "tool_input": {"cmd": base},
+        })))
+
+    def test_commit_gate_profile_rejects_other_execution_and_composition(self):
+        helper = "/home/avi/.agents/skills/prepare-repo-commit/scripts/check_git_commit_gate.py"
+        base = f"python3 {helper} --repo-root {ROOT}"
+        mutation = "jiractl change apply p_synthetic"
+        commands = [
+            base.replace(helper, "/tmp/check_git_commit_gate.py"),
+            base.replace(str(ROOT), str(ROOT) + "-other"),
+            base.replace("python3", "uv run python3", 1),
+            base.replace("python3", "/tmp/python3", 1),
+            "PYTHONPATH=/tmp/synthetic " + base,
+            "env JIRA_TOKEN=SYNTHETIC-CANARY " + base,
+            base + " --config alternate.json", base + " --commit-msg-file /tmp/message",
+            base + " --repo-root /tmp", base + " --json --json",
+            base + " --branch", base + " --unknown", base + " extra.py",
+            base + " --commit-subject '$(" + mutation + ")'",
+            base + " --commit-subject '`" + mutation + "`'",
+            base + " > /tmp/gate-output",
+        ]
+        for operator in ("&&", "||", ";", "|", "\n"):
+            commands.append(base + " " + operator + " " + mutation)
+        for wrapper in ("env", "command", "exec", "bash -c"):
+            wrapped = wrapper + " " + (shlex.quote(mutation) if wrapper == "bash -c" else mutation)
+            commands.append(base + " && " + wrapped)
+        for command in commands:
+            with self.subTest(command=command):
+                result = self.decision("exec_command", {"cmd": command})
+                self.assertTrue(self.blocked(result))
+                self.assertNotIn("SYNTHETIC-CANARY", json.dumps(result))
+
+    def test_read_only_python_profiles_pass(self):
+        tokenizer = (
+            "uv run --with tiktoken python -c 'import pathlib,tiktoken; "
+            "data=pathlib.Path(\"skill/jira-context/SKILL.md\").read_text(); "
+            "enc=tiktoken.get_encoding(\"o200k_base\"); "
+            "print(\"o200k_base_proxy_tokens=\"+str(len(enc.encode(data))))'"
+        )
+        inventory = (
+            "python3 -c 'import ast,json,pathlib; "
+            "p=pathlib.Path(\"/tmp/reference-checkout.aahOG1/src/mcp_atlassian/servers/jira.py\"); "
+            "tree=ast.parse(p.read_text()); "
+            "rows=[{\"symbol\":n.name,\"line\":n.lineno,\"classification\":\"UNCLASSIFIED\"} "
+            "for n in tree.body if isinstance(n,(ast.FunctionDef,ast.AsyncFunctionDef)) and "
+            "any(isinstance(d,ast.Call) and isinstance(d.func,ast.Attribute) and "
+            "isinstance(d.func.value,ast.Name) and d.func.value.id==\"jira_mcp\" and "
+            "d.func.attr==\"tool\" for d in n.decorator_list)]; "
+            "print(json.dumps({\"schema_version\":\"jiractl.reference-inventory.v1\","
+            "\"source_file\":\"src/mcp_atlassian/servers/jira.py\",\"rows\":rows}))'"
+        )
+        for command in (tokenizer, inventory):
+            with self.subTest(command=command):
+                self.assertEqual({}, self.decision("exec_command", {"cmd": command}))
+        with_cache = "UV_CACHE_DIR=/tmp/jiractl-uv-cache.AbC123 " + tokenizer
+        self.assertEqual({}, self.decision("exec_command", {"cmd": with_cache}))
+
+    def test_request_user_input_question_is_data(self):
+        payload = {
+            "questions": [{
+                "header": "Приёмка",
+                "id": "acceptance_mode",
+                "question": "Проводим Jira-приёмку read-only или полностью offline?",
+                "options": [
+                    {"label": "Read-only", "description": "Только чтение Jira."},
+                    {"label": "Offline", "description": "Без Jira-запросов."},
+                ],
+            }],
+        }
+        self.assertEqual({}, self.decision("request_user_input", payload))
+
+    def test_python_call_rules_preserve_argument_and_receiver_boundaries(self):
+        prefix = 'import ast,json,pathlib,tiktoken; p=pathlib.Path("skill/jira-context/SKILL.md"); '
+        cases = [
+            ('data=p.read_text(); tree=ast.parse(data); print(json.dumps(tree.body))', True),
+            ('print(p.read_text())', True),
+            ('enc=tiktoken.get_encoding("o200k_base"); print(enc.encode("jira"))', True),
+            ('print(pathlib.Path("/tmp/jira-secret").read_text())', False),
+            ('print(p.read_text("utf-8"))', False),
+            ('print(p.read_text(encoding="utf-8"))', False),
+            ('print(ast.parse("jira"))', False),
+            ('print(json.dumps())', False),
+            ('print(tiktoken.get_encoding(42))', False),
+            ('print(tiktoken.get_encoding("o200k_base").encode("jira"))', False),
+            ('print(p.encode("jira"))', False),
+            ('print(pathlib.parse(p.read_text()))', False),
+            ('print(len())', False),
+            ('print(isinstance(p))', False),
+        ]
+        for code, allowed in cases:
+            with self.subTest(code=code):
+                result = self.decision("exec_command", {"cmd": "python3 -c " + shlex.quote(prefix + code)})
+                self.assertEqual(not allowed, self.blocked(result))
+
+    def test_local_allow_profiles_do_not_extend_to_jira_mutations(self):
+        safe_commands = [
+            "GOCACHE=/tmp/race-cache.OXebML GOBIN=/tmp/install-smoke.v1zeDx go install ./cmd/jiractl",
+            "gofmt -w internal/cli cmd/jiractl/main_test.go",
+            "mktemp -d /tmp/jiractl-race-cache.XXXXXX",
+            (
+                "uv run --with tiktoken python -c 'import pathlib,tiktoken; "
+                "data=pathlib.Path(\"skill/jira-context/SKILL.md\").read_text(); "
+                "enc=tiktoken.get_encoding(\"o200k_base\"); print(str(len(enc.encode(data))))'"
+            ),
+            (
+                "python3 -c 'import ast,pathlib; "
+                "p=pathlib.Path(\"/tmp/reference-checkout.aahOG1/src/mcp_atlassian/servers/jira.py\"); "
+                "print(len(ast.parse(p.read_text()).body))'"
+            ),
+        ]
+        mutation = "jiractl change apply p_synthetic"
+        for safe in safe_commands:
+            for operator in ("&&", "||", ";", "|", "\n"):
+                command = safe + (operator if operator == "\n" else " " + operator + " ") + mutation
+                with self.subTest(safe=safe, operator=operator):
+                    self.assertTrue(self.blocked(self.decision("exec_command", {"cmd": command})))
+
+    def test_substitutions_wrappers_and_unsafe_python_block(self):
+        commands = [
+            "echo $(jiractl change apply p_synthetic)",
+            "printf '%s' `jiractl change apply p_synthetic`",
+            "env jiractl change apply p_synthetic",
+            "command jiractl change apply p_synthetic",
+            "exec jiractl change apply p_synthetic",
+            "bash -c 'jiractl change apply p_synthetic'",
+            "bash -c 'eval \"$1\"' _ 'jiractl change apply p_synthetic'",
+            "gofmt -w cmd/jiractl/main_test.go > /tmp/formatted.go",
+            (
+                "uv run --with tiktoken python -c 'import subprocess; "
+                "subprocess.run([\"jiractl\",\"change\",\"apply\",\"p_synthetic\"])'"
+            ),
+            (
+                "uv run --with tiktoken python -c 'import urllib.request; "
+                "urllib.request.urlopen(\"https://jira.invalid/rest/api/2/myself\")'"
+            ),
+            "python3 -c 'import os; os.system(\"jiractl change apply p_synthetic\")'",
+            (
+                "python3 -c 'import pathlib; "
+                "pathlib.Path(\"skill/jira-context/SKILL.md\").write_text(\"jira\")'"
+            ),
+        ]
+        for command in commands:
+            with self.subTest(command=command):
+                self.assertTrue(self.blocked(self.decision("exec_command", {"cmd": command})))
+
+    def test_local_profiles_are_exact(self):
+        commands = [
+            "FOO=/tmp/x go install ./cmd/jiractl",
+            "GOCACHE=relative go install ./cmd/jiractl",
+            "go install -race ./cmd/jiractl",
+            "go install ./cmd/jiractl ./cmd/other",
+            "gofmt -w ../jiractl-copy/main.go",
+            "gofmt -d cmd/jiractl/main_test.go",
+            "mktemp -d /tmp/jiractl-race-cache.XXXXXX extra",
+            "mktemp -d /tmp/jiractl-race-cache.XXXXX",
+            "uv run --with requests python -c 'print(\"jira\")'",
+            "uv run --with tiktoken python3 -c 'print(\"jira\")'",
+        ]
+        for command in commands:
+            with self.subTest(command=command):
+                self.assertTrue(self.blocked(self.decision("exec_command", {"cmd": command})))
+
+    def test_outer_exec_is_data_but_nested_tool_call_is_classified(self):
+        outer = self.decision("exec", {
+            "code": "await tools.exec_command({cmd: 'jiractl change apply p_synthetic'})",
+        })
+        nested = self.decision("exec_command", {"cmd": "jiractl change apply p_synthetic"})
+        self.assertEqual({}, outer)
+        self.assertTrue(self.blocked(nested))
 
     def test_server_writes_and_unknown_operations_block(self):
         for operation in (
