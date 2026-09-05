@@ -1,0 +1,63 @@
+{
+  "schema_version": "jiractl.v1",
+  "command": "snapshot.create",
+  "status": "partial",
+  "data": {
+    "schema_version": "jiractl.snapshot.v1",
+    "snapshot_ref": "s_0123456789abcdef0123456789abcdef",
+    "run_ref": "r_0123456789abcdef0123456789abcdef",
+    "namespace": {
+      "base_url": "https://jira.example.internal/jira",
+      "profile": "default",
+      "principal": "synthetic-user"
+    },
+    "started_at": "2026-09-05T00:00:00Z",
+    "finished_at": "2026-09-05T00:01:00Z",
+    "consistency": "best_effort",
+    "scope": {
+      "input_ref": "a_0123456789abcdef0123456789abcdef",
+      "input_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "fields": [
+        "summary",
+        "status",
+        "description"
+      ],
+      "sections": [],
+      "membership_ref": "a_0123456789abcdef0123456789abcdef"
+    },
+    "counts": {
+      "selected": 100,
+      "captured": 97,
+      "failed": 3
+    },
+    "selection_complete": false,
+    "limited_by": "user",
+    "capture_complete": false,
+    "records_ref": "a_0123456789abcdef0123456789abcdef",
+    "errors": [
+      {
+        "issue_key": "APP-498",
+        "code": "TRANSPORT_DEADLINE"
+      },
+      {
+        "issue_key": "APP-499",
+        "code": "TRANSPORT_DEADLINE"
+      },
+      {
+        "issue_key": "APP-500",
+        "code": "TRANSPORT_DEADLINE"
+      }
+    ]
+  },
+  "meta": {
+    "source": "jira",
+    "profile": "default",
+    "complete": false,
+    "delivery": "inline"
+  },
+  "error": {
+    "code": "PARTIAL_RESULT",
+    "message": "Три выбранные задачи не были полностью получены; см. manifest.",
+    "retryable": false
+  }
+}

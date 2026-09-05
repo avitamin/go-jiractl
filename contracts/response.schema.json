@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "jiractl.v1 response",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "command",
+    "status",
+    "data",
+    "meta"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "jiractl.v1"
+    },
+    "command": {
+      "type": "string",
+      "pattern": "^[a-z]+(?:[.][a-z]+)*$"
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "partial",
+        "error"
+      ]
+    },
+    "data": {},
+    "artifact": {
+      "type": "object",
+      "required": [
+        "ref",
+        "kind",
+        "bytes"
+      ],
+      "properties": {
+        "ref": {
+          "type": "string",
+          "pattern": "^a_[0-9a-f]{32}$"
+        },
+        "kind": {
+          "enum": [
+            "json",
+            "jsonl",
+            "text"
+          ]
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": true
+    },
+    "meta": {
+      "type": "object",
+      "required": [
+        "source",
+        "profile",
+        "complete",
+        "delivery"
+      ],
+      "properties": {
+        "source": {
+          "enum": [
+            "jira",
+            "artifact",
+            "snapshot",
+            "local"
+          ]
+        },
+        "profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "delivery": {
+          "enum": [
+            "inline",
+            "artifact"
+          ]
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "item_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pagination": {
+          "type": "object",
+          "required": [
+            "returned",
+            "total",
+            "next_cursor"
+          ],
+          "properties": {
+            "returned": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "total": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "next_cursor": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^c_[0-9a-f]{32}$"
+                }
+              ]
+            }
+          },
+          "additionalProperties": true
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "field_states": {
+          "type": "object",
+          "additionalProperties": {
+            "enum": [
+              "unknown",
+              "unavailable",
+              "not_authorized",
+              "null",
+              "available"
+            ]
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "error": {
+      "type": "object",
+      "required": [
+        "code",
+        "message",
+        "retryable"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "details": {
+          "type": "object"
+        },
+        "recovery": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "partial",
+              "error"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "meta": {
+            "properties": {
+              "complete": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "meta": {
+            "properties": {
+              "complete": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "meta": {
+            "properties": {
+              "delivery": {
+                "const": "artifact"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "artifact"
+        ],
+        "properties": {
+          "data": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ]
+}

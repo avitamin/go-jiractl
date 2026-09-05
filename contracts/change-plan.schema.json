@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Immutable single-operation change plan v1",
+  "type": "object",
+  "required": [
+    "plan_ref",
+    "digest",
+    "payload"
+  ],
+  "properties": {
+    "plan_ref": {
+      "type": "string",
+      "pattern": "^p_[0-9a-f]{32}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "payload": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "operation",
+        "base_url",
+        "principal",
+        "profile",
+        "created_at",
+        "expires_at",
+        "input",
+        "expected_state",
+        "concurrency_guarantee"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "jiractl.plan.v1"
+        },
+        "operation": {
+          "enum": [
+            "issue.create",
+            "issue.update",
+            "issue.assign",
+            "issue.transition",
+            "comment.add",
+            "link.create"
+          ]
+        },
+        "base_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "principal": {
+          "type": "string"
+        },
+        "profile": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "input": {
+          "type": "object"
+        },
+        "expected_state": {
+          "type": "object"
+        },
+        "concurrency_guarantee": {
+          "enum": [
+            "best_effort",
+            "server_conditional_verified"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "description": "Verify digest against canonical payload bytes; validate per-operation input and target metadata, principal, TTL, protected profile and preconditions at apply. This schema is not human authorization."
+}

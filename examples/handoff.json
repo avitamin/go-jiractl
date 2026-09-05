@@ -1,0 +1,20 @@
+{
+  "task_id": "T02",
+  "state": "in_progress",
+  "base_sha": "0000000000000000000000000000000000000000",
+  "head_sha": null,
+  "changed_files": [],
+  "summary": "Синтетический пример структуры handoff, не результат выполнения задачи.",
+  "tests": [
+    {
+      "command": "go test ./internal/adapters/http/...",
+      "executed": false,
+      "exit_code": null,
+      "evidence": null
+    }
+  ],
+  "gaps": [
+    "Реализация ещё не выполнена."
+  ],
+  "contract_changes": []
+}

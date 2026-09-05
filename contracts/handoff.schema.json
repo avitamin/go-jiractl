@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Bounded agent handoff",
+  "type": "object",
+  "required": [
+    "task_id",
+    "state",
+    "base_sha",
+    "head_sha",
+    "changed_files",
+    "summary",
+    "tests",
+    "gaps",
+    "contract_changes"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^[TE][0-9]{2}$"
+    },
+    "state": {
+      "enum": [
+        "in_progress",
+        "ready_for_review",
+        "blocked",
+        "rework"
+      ]
+    },
+    "base_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "head_sha": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "changed_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 3000
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "command",
+          "executed",
+          "exit_code",
+          "evidence"
+        ],
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "executed": {
+            "type": "boolean"
+          },
+          "exit_code": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "evidence": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "contract_changes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

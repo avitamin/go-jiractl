@@ -1,0 +1,12 @@
+# Синтетический proposed Jira-профиль. Trusted config хранится ВНЕ репозитория.
+# Bootstrap ещё не использует PAT или transport settings.
+[profiles.default]
+base_url = "https://jira.example.internal/jira"
+deployment = "server_dc"
+pat_env = "JIRA_PERSONAL_TOKEN"
+write_enabled = false
+# ca_bundle = "/trusted/path/company-ca.pem"
+read_concurrency = 4
+metadata_ttl_seconds = 900
+artifact_retention_days = 7
+artifact_quota_bytes = 1073741824

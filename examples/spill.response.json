@@ -1,0 +1,23 @@
+{
+  "schema_version": "jiractl.v1",
+  "command": "issues.search",
+  "status": "ok",
+  "data": null,
+  "artifact": {
+    "ref": "a_0123456789abcdef0123456789abcdef",
+    "kind": "json",
+    "bytes": 47210
+  },
+  "meta": {
+    "source": "jira",
+    "profile": "default",
+    "complete": true,
+    "delivery": "artifact",
+    "item_count": 25,
+    "pagination": {
+      "returned": 25,
+      "total": 100,
+      "next_cursor": "c_0123456789abcdef0123456789abcdef"
+    }
+  }
+}

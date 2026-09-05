@@ -1,0 +1,278 @@
+{
+  "schema_version": "jiractl.commands.v1",
+  "status": "proposed_not_implemented",
+  "global_options": {
+    "profile": "default",
+    "format": "json",
+    "max_bytes": 8192,
+    "ordinary_deadline_seconds": 60,
+    "capture_deadline_seconds": 300
+  },
+  "commands": [
+    {
+      "id": "describe",
+      "syntax": "jiractl describe COMMAND_ID",
+      "stage": "v0.1",
+      "semantics": "local",
+      "options": [
+        "--section summary|input|output|errors"
+      ],
+      "data_model": "CommandDescription",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "doctor",
+      "syntax": "jiractl doctor",
+      "stage": "v0.1",
+      "semantics": "read",
+      "options": [
+        "--probe"
+      ],
+      "data_model": "DoctorResult",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "capabilities",
+      "syntax": "jiractl capabilities",
+      "stage": "v0.1",
+      "semantics": "read",
+      "options": [
+        "--refresh"
+      ],
+      "data_model": "CapabilityCollection",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "issues.search",
+      "syntax": "jiractl issues search",
+      "stage": "v0.1",
+      "semantics": "read",
+      "options": [
+        "--jql-file PATH | --jql TEXT | --cursor REF",
+        "--limit 25 (1..100)",
+        "--preset brief|analysis | --fields CSV"
+      ],
+      "data_model": "IssuePage",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "issue.get",
+      "syntax": "jiractl issue get KEY_OR_ID",
+      "stage": "v0.1",
+      "semantics": "read",
+      "options": [
+        "--preset brief|analysis | --fields CSV"
+      ],
+      "data_model": "Issue",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "issue.section",
+      "syntax": "jiractl issue section KEY_OR_ID SECTION",
+      "stage": "v0.1",
+      "semantics": "read",
+      "options": [
+        "--limit 20",
+        "--cursor REF"
+      ],
+      "data_model": "SectionResult",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "fields.search",
+      "syntax": "jiractl fields search",
+      "stage": "v0.1",
+      "semantics": "read",
+      "options": [
+        "--query TEXT",
+        "--limit 25",
+        "--cursor REF"
+      ],
+      "data_model": "FieldPage",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "snapshot.create",
+      "syntax": "jiractl snapshot create",
+      "stage": "v0.1",
+      "semantics": "read",
+      "options": [
+        "--jql-file PATH | --keys-file PATH",
+        "--max-issues N",
+        "--preset brief|analysis | --fields CSV",
+        "--sections CSV",
+        "--max-comments-per-issue 1000"
+      ],
+      "data_model": "SnapshotManifest",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "snapshot.resume",
+      "syntax": "jiractl snapshot resume RUN_REF",
+      "stage": "v0.1",
+      "semantics": "read",
+      "options": [],
+      "data_model": "SnapshotManifest",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "snapshot.show",
+      "syntax": "jiractl snapshot show SNAPSHOT_REF",
+      "stage": "v0.1",
+      "semantics": "local",
+      "options": [],
+      "data_model": "SnapshotManifest",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "snapshot.read",
+      "syntax": "jiractl snapshot read SNAPSHOT_REF",
+      "stage": "v0.1",
+      "semantics": "local",
+      "options": [
+        "--issue KEY_OR_ID",
+        "--section SECTION | --fields CSV"
+      ],
+      "data_model": "IssueOrSection",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "snapshot.diff",
+      "syntax": "jiractl snapshot diff BEFORE AFTER",
+      "stage": "v0.1",
+      "semantics": "local",
+      "options": [
+        "--fields CSV"
+      ],
+      "data_model": "SnapshotDiff",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "artifact.read",
+      "syntax": "jiractl artifact read REF",
+      "stage": "v0.1",
+      "semantics": "local",
+      "options": [
+        "--pointer JSON_POINTER",
+        "--offset N --limit N | --char-offset N --char-limit N"
+      ],
+      "data_model": "ArtifactRange",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "artifact.export",
+      "syntax": "jiractl artifact export REF",
+      "stage": "v0.1",
+      "semantics": "local_write",
+      "options": [
+        "--out PATH",
+        "--overwrite"
+      ],
+      "data_model": "ExportReceipt",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "artifact.prune",
+      "syntax": "jiractl artifact prune",
+      "stage": "v0.1",
+      "semantics": "local_write",
+      "options": [
+        "--apply"
+      ],
+      "data_model": "PrunePreviewOrReceipt",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "change.plan",
+      "syntax": "jiractl change plan",
+      "stage": "v0.2",
+      "semantics": "read",
+      "options": [
+        "--operation OP",
+        "--input PATH|-"
+      ],
+      "data_model": "ChangePlan",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "change.show",
+      "syntax": "jiractl change show PLAN_REF",
+      "stage": "v0.2",
+      "semantics": "local",
+      "options": [],
+      "data_model": "ChangePlan",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "change.apply",
+      "syntax": "jiractl change apply PLAN_REF",
+      "stage": "v0.2",
+      "semantics": "jira_write",
+      "options": [
+        "--approve SHA256"
+      ],
+      "data_model": "ChangeReceipt",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "change.reconcile",
+      "syntax": "jiractl change reconcile PLAN_REF",
+      "stage": "v0.2",
+      "semantics": "read",
+      "options": [],
+      "data_model": "ReconciliationEvidence",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "metadata.create",
+      "syntax": "jiractl metadata create",
+      "stage": "v0.2",
+      "semantics": "read",
+      "options": [
+        "--project ID_OR_KEY",
+        "--issue-type ID (optional; absent returns issue types)"
+      ],
+      "data_model": "CreateMetadata",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "metadata.edit",
+      "syntax": "jiractl metadata edit KEY_OR_ID",
+      "stage": "v0.2",
+      "semantics": "read",
+      "options": [],
+      "data_model": "EditMetadata",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "metadata.transitions",
+      "syntax": "jiractl metadata transitions KEY_OR_ID",
+      "stage": "v0.2",
+      "semantics": "read",
+      "options": [],
+      "data_model": "TransitionMetadata",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "metadata.users",
+      "syntax": "jiractl metadata users",
+      "stage": "v0.2",
+      "semantics": "read",
+      "options": [
+        "--issue KEY_OR_ID | --project ID",
+        "--query TEXT"
+      ],
+      "data_model": "UserCandidates",
+      "envelope_schema": "contracts/response.schema.json"
+    },
+    {
+      "id": "metadata.linktypes",
+      "syntax": "jiractl metadata linktypes",
+      "stage": "v0.2",
+      "semantics": "read",
+      "options": [],
+      "data_model": "LinkTypeCollection",
+      "envelope_schema": "contracts/response.schema.json"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": "jiractl.v1",
+  "command": "change.apply",
+  "status": "error",
+  "data": null,
+  "meta": {
+    "source": "local",
+    "profile": "default",
+    "complete": false,
+    "delivery": "inline"
+  },
+  "error": {
+    "code": "WRITE_OUTCOME_UNKNOWN",
+    "message": "Ответ после возможной отправки записи не получен. Повтор отключён.",
+    "retryable": false,
+    "recovery": {
+      "action": "change.reconcile",
+      "plan_ref": "p_0123456789abcdef0123456789abcdef"
+    }
+  }
+}

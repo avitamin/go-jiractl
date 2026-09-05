@@ -1,0 +1,433 @@
+{
+  "schema_version": "jiractl.tasks.v1",
+  "orchestrator": "human_or_codex_integrator_not_custom_workflow_engine",
+  "default_stage": "v0.1",
+  "max_active_subagents": 3,
+  "max_correction_rounds": 2,
+  "tasks": [
+    {
+      "id": "T-TOOLING",
+      "stage": "future",
+      "title": "Go pack validator and pinned upstream inventory",
+      "owner_role": "implementer",
+      "depends_on": [],
+      "status": "pending",
+      "allowed_paths": [
+        "cmd/packcheck/**",
+        "cmd/inventory/**",
+        "internal/tooling/**"
+      ],
+      "acceptance": [
+        "Validate schemas, references and command registry with deterministic Go tests",
+        "Extract pinned upstream inventory without executing upstream code; report static/runtime evidence separately"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": true
+    },
+    {
+      "id": "T00",
+      "stage": "v0.1",
+      "title": "Reference and deployment preflight",
+      "owner_role": "integrator",
+      "depends_on": [],
+      "status": "pending",
+      "allowed_paths": [
+        "planning/reference-inventory.json",
+        "planning/coverage.json",
+        "docs/deployment-profile.md",
+        "evidence/preflight.json"
+      ],
+      "acceptance": [
+        "Pinned source and runtime inventory status explicit",
+        "Target version, identity and live-access gaps recorded"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": false
+    },
+    {
+      "id": "T01",
+      "stage": "v0.1",
+      "title": "Freeze contract and skeleton",
+      "owner_role": "integrator",
+      "depends_on": [
+        "T00"
+      ],
+      "status": "pending",
+      "allowed_paths": [
+        "contracts/**",
+        "docs/**",
+        "internal/**",
+        "go.mod",
+        "go.sum",
+        ".github/**",
+        "cmd/jiractl/**",
+        "Makefile"
+      ],
+      "acceptance": [
+        "Schema examples pass",
+        "Accepted contract and lock documented",
+        "Initial CI and ownership defined"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": false
+    },
+    {
+      "id": "T02",
+      "stage": "v0.1",
+      "title": "Config PAT HTTP transport",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T01"
+      ],
+      "status": "pending",
+      "allowed_paths": [
+        "internal/config/**",
+        "internal/adapters/http/**",
+        "internal/security/**",
+        "tests/unit/transport/**"
+      ],
+      "acceptance": [
+        "TLS/context path/redirect tests pass",
+        "Semantic read retries bounded",
+        "No canary secret leakage"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": false
+    },
+    {
+      "id": "T03",
+      "stage": "v0.1",
+      "title": "JSON output and artifact store",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T01"
+      ],
+      "status": "pending",
+      "allowed_paths": [
+        "internal/output/**",
+        "internal/store/**",
+        "tests/unit/output/**",
+        "tests/unit/store/**"
+      ],
+      "acceptance": [
+        "Byte budget and Unicode safe",
+        "Lossless spill and range read",
+        "Atomic publication and namespace tests"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": false
+    },
+    {
+      "id": "T04",
+      "stage": "v0.1",
+      "title": "Fixtures and baseline harness",
+      "owner_role": "fixture_writer",
+      "depends_on": [
+        "T01"
+      ],
+      "status": "pending",
+      "allowed_paths": [
+        "tests/fixtures/**",
+        "tests/golden/**",
+        "bench/**"
+      ],
+      "acceptance": [
+        "Synthetic deterministic corpus",
+        "Tuned/default MCP baselines recorded",
+        "No fabricated usage numbers"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": false
+    },
+    {
+      "id": "T05",
+      "stage": "v0.1",
+      "title": "First vertical read slice",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T02",
+        "T03",
+        "T04"
+      ],
+      "status": "pending",
+      "allowed_paths": [
+        "internal/application/read/**",
+        "internal/adapters/jira_dc/read/**",
+        "internal/cli/read/**",
+        "tests/integration/read/**"
+      ],
+      "acceptance": [
+        "Real CLI JSON exit stderr tests",
+        "No hidden writes",
+        "Fields and pagination preserve facts"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": false
+    },
+    {
+      "id": "T06",
+      "stage": "v0.1",
+      "title": "Snapshots resume and diff",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T05"
+      ],
+      "status": "pending",
+      "allowed_paths": [
+        "internal/application/snapshot/**",
+        "internal/cli/snapshot/**",
+        "tests/snapshot/**"
+      ],
+      "acceptance": [
+        "100 issue deterministic capture",
+        "Resume completed units not refetched",
+        "Partial and false-deletion tests"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": false
+    },
+    {
+      "id": "T07",
+      "stage": "v0.1",
+      "title": "Skill and agent evaluation",
+      "owner_role": "integrator",
+      "depends_on": [
+        "T06"
+      ],
+      "status": "pending",
+      "allowed_paths": [
+        "skill/**",
+        ".agents/skills/jira-context/**",
+        "bench/**",
+        "docs/benchmark-report.md"
+      ],
+      "acceptance": [
+        "Activated skill budget measured",
+        "Tuned baseline evaluated with equal correctness",
+        "No unimplemented commands advertised"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": false
+    },
+    {
+      "id": "T08",
+      "stage": "v0.1",
+      "title": "Independent read-only acceptance",
+      "owner_role": "integrator",
+      "depends_on": [
+        "T07"
+      ],
+      "status": "pending",
+      "allowed_paths": [
+        "docs/release-v0.1.md",
+        "evidence/release-v0.1/**"
+      ],
+      "acceptance": [
+        "Full tests rerun on integration head",
+        "Clean install",
+        "Target compatibility evidence or explicit offline-only verdict"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": false
+    },
+    {
+      "id": "T09",
+      "stage": "v0.2",
+      "title": "Write metadata discovery",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T08"
+      ],
+      "status": "pending",
+      "allowed_paths": [
+        "internal/application/metadata/**",
+        "internal/adapters/jira_dc/metadata/**",
+        "internal/cli/metadata/**",
+        "tests/metadata/**"
+      ],
+      "acceptance": [
+        "DC create edit transition metadata",
+        "Ambiguity and explicit null tests"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": true
+    },
+    {
+      "id": "T10",
+      "stage": "v0.2",
+      "title": "Plan apply ledger and reconciliation",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T09"
+      ],
+      "status": "pending",
+      "allowed_paths": [
+        "internal/application/change/**",
+        "internal/store/ledger/**",
+        "internal/cli/change/**",
+        "tests/change/**"
+      ],
+      "acceptance": [
+        "Digest TTL profile principal checks",
+        "Crash uncertainty and no blind retry",
+        "Residual TOCTOU explicit"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": true
+    },
+    {
+      "id": "T11",
+      "stage": "v0.2",
+      "title": "Six guarded write handlers",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T10"
+      ],
+      "status": "pending",
+      "allowed_paths": [
+        "internal/adapters/jira_dc/write/**",
+        "tests/integration/write/**"
+      ],
+      "acceptance": [
+        "Only approved supported write operations dispatch",
+        "Metadata payload parity",
+        "Sandbox E2E separately authorized"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": true
+    },
+    {
+      "id": "T12",
+      "stage": "v0.2",
+      "title": "Independent write acceptance",
+      "owner_role": "integrator",
+      "depends_on": [
+        "T11"
+      ],
+      "status": "pending",
+      "allowed_paths": [
+        "docs/release-v0.2.md",
+        "evidence/release-v0.2/**"
+      ],
+      "acceptance": [
+        "Write safety review",
+        "Lost-response scenario verified",
+        "No exactly-once or approval overclaims"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": true
+    },
+    {
+      "id": "E01",
+      "stage": "future",
+      "title": "Agile operations",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T12"
+      ],
+      "status": "pending",
+      "allowed_paths": [],
+      "acceptance": [
+        "Scope and target capability verified before work"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": true
+    },
+    {
+      "id": "E02",
+      "stage": "future",
+      "title": "Worklogs watchers user and comment extensions",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T12"
+      ],
+      "status": "pending",
+      "allowed_paths": [],
+      "acceptance": [
+        "Scope and target capability verified before work"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": true
+    },
+    {
+      "id": "E03",
+      "stage": "future",
+      "title": "Project metadata versions components epic and link extensions",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T12"
+      ],
+      "status": "pending",
+      "allowed_paths": [],
+      "acceptance": [
+        "Scope and target capability verified before work"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": true
+    },
+    {
+      "id": "E04",
+      "stage": "future",
+      "title": "Binary attachment handling",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T12"
+      ],
+      "status": "pending",
+      "allowed_paths": [],
+      "acceptance": [
+        "Size MIME origin filename safety; no automatic base64 stdout"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": true
+    },
+    {
+      "id": "E05",
+      "stage": "future",
+      "title": "Jira Service Management",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T12"
+      ],
+      "status": "pending",
+      "allowed_paths": [],
+      "acceptance": [
+        "Plugin API version and permissions verified"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": true
+    },
+    {
+      "id": "E06",
+      "stage": "future",
+      "title": "Forms SLA dates development info",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T12"
+      ],
+      "status": "pending",
+      "allowed_paths": [],
+      "acceptance": [
+        "Plugin-dependent API support explicit"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": true
+    },
+    {
+      "id": "E07",
+      "stage": "future",
+      "title": "Hierarchy and dependency aggregation",
+      "owner_role": "implementer",
+      "depends_on": [
+        "T12"
+      ],
+      "status": "pending",
+      "allowed_paths": [],
+      "acceptance": [
+        "Aggregation completeness and bounded output verified"
+      ],
+      "acceptance_owner": "integrator",
+      "requires_explicit_scope_extension": true
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Normalized issue projection",
+  "type": "object",
+  "required": [
+    "id",
+    "key"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "id",
+            "name"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "assignee": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "updated": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "format",
+            "text"
+          ],
+          "properties": {
+            "format": {
+              "enum": [
+                "jira-wiki",
+                "plain",
+                "unknown"
+              ]
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "issue_type": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "priority": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "labels": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "components": {
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "fix_versions": {
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "links": {
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "custom_fields": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

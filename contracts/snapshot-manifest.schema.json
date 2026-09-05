@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Snapshot manifest v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "snapshot_ref",
+    "run_ref",
+    "namespace",
+    "started_at",
+    "finished_at",
+    "consistency",
+    "scope",
+    "counts",
+    "selection_complete",
+    "limited_by",
+    "capture_complete",
+    "records_ref",
+    "errors"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "jiractl.snapshot.v1"
+    },
+    "snapshot_ref": {
+      "type": "string",
+      "pattern": "^s_[0-9a-f]{32}$"
+    },
+    "run_ref": {
+      "type": "string",
+      "pattern": "^r_[0-9a-f]{32}$"
+    },
+    "namespace": {
+      "type": "object",
+      "required": [
+        "base_url",
+        "profile",
+        "principal"
+      ],
+      "properties": {
+        "base_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "profile": {
+          "type": "string"
+        },
+        "principal": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "consistency": {
+      "const": "best_effort"
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "input_ref",
+        "input_sha256",
+        "fields",
+        "sections",
+        "membership_ref"
+      ],
+      "properties": {
+        "input_ref": {
+          "type": "string",
+          "pattern": "^a_[0-9a-f]{32}$"
+        },
+        "input_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "membership_ref": {
+          "type": "string",
+          "pattern": "^a_[0-9a-f]{32}$"
+        }
+      },
+      "additionalProperties": true
+    },
+    "counts": {
+      "type": "object",
+      "required": [
+        "selected",
+        "captured",
+        "failed"
+      ],
+      "properties": {
+        "selected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "captured": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "selection_complete": {
+      "type": "boolean"
+    },
+    "limited_by": {
+      "enum": [
+        "user",
+        "source",
+        "none"
+      ]
+    },
+    "capture_complete": {
+      "type": "boolean"
+    },
+    "records_ref": {
+      "type": "string",
+      "pattern": "^a_[0-9a-f]{32}$"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "additionalProperties": true,
+  "description": "Runtime invariants: captured+failed=selected for finalized manifests; complete captures have zero errors and complete selected fields/sections. Count constraints and referential integrity require semantic tests."
+}

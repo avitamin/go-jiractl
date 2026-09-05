@@ -1,0 +1,25 @@
+{
+  "plan_ref": "p_0123456789abcdef0123456789abcdef",
+  "digest": "ae0a69de87f3089178b0a2101d47233a5e2bd61652eead05dfe686f671658b69",
+  "payload": {
+    "schema_version": "jiractl.plan.v1",
+    "operation": "issue.update",
+    "base_url": "https://jira.example.internal/jira",
+    "principal": "synthetic-user",
+    "profile": "default",
+    "created_at": "2026-09-05T00:00:00Z",
+    "expires_at": "2026-09-05T00:15:00Z",
+    "input": {
+      "issue": "APP-421",
+      "fields": {
+        "summary": "Исправить сохранение формы"
+      }
+    },
+    "expected_state": {
+      "issue_id": "10421",
+      "summary": "Сохранение формы",
+      "updated": "2026-09-04T15:30:00Z"
+    },
+    "concurrency_guarantee": "best_effort"
+  }
+}

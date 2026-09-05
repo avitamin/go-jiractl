@@ -1,0 +1,13 @@
+{
+  "schema_version": "jiractl.reference.v1",
+  "repository": "https://github.com/sooperset/mcp-atlassian",
+  "commit": "22369b76d6c1775a9730ba7d7cb37d49f7da671a",
+  "observed_commit_date": "2026-09-04",
+  "verified_at": "2026-09-05",
+  "mode": "coverage_and_behavior_reference_only",
+  "source_viewed": true,
+  "checkout_materialized": false,
+  "runtime_inventory_verified": false,
+  "inventory_seed": "planning/coverage.seed.json",
+  "next_action": "T00: reproduce inventory from exact clean checkout, compare runtime registration and target capabilities."
+}

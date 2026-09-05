@@ -1,0 +1,14 @@
+.idea/
+.reference/
+.worktrees/
+.jiractl/
+.local/
+.env
+.env.*
+*.log
+evidence/private/
+bench/results/private/
+dist/
+build/
+/jiractl
+/jiractl.exe

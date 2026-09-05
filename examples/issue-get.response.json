@@ -1,0 +1,26 @@
+{
+  "schema_version": "jiractl.v1",
+  "command": "issue.get",
+  "status": "ok",
+  "data": {
+    "id": "10421",
+    "key": "APP-421",
+    "summary": "Сохранение формы",
+    "status": {
+      "id": "3",
+      "name": "In Progress"
+    },
+    "assignee": {
+      "name": "developer",
+      "key": "u123"
+    },
+    "updated": "2026-09-04T15:30:00Z"
+  },
+  "meta": {
+    "source": "jira",
+    "profile": "default",
+    "complete": true,
+    "delivery": "inline",
+    "observed_at": "2026-09-05T00:00:00Z"
+  }
+}

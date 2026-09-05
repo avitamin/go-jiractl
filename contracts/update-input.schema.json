@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "issue.update input v1",
+  "type": "object",
+  "required": [
+    "issue",
+    "fields"
+  ],
+  "properties": {
+    "issue": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "fields": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+      },
+      "additionalProperties": {}
+    }
+  },
+  "additionalProperties": false,
+  "description": "Target edit metadata MUST validate field IDs, shapes, allowed operations and null semantics; JSON Schema alone is not target validation."
+}

@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "branch_regex": "(?P<issue_key>)[^\\s]+",
+  "commit_subject_regex": "(?P<issue_key>)[a-z][a-z0-9-]*(?:\\([^()\\r\\n]+\\))?!?: \\S[^\\r\\n]*"
+}
