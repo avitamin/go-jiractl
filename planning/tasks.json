@@ -291,7 +291,8 @@
       "acceptance": [
         "Only approved supported write operations dispatch",
         "Metadata payload parity",
-        "Sandbox E2E separately authorized"
+        "Server E2E: user executes manual write steps; agent waits for completion then verifies by reads",
+        "Retries fixes and cleanup are manual user actions; automated write tests use local synthetic mocks only"
       ],
       "acceptance_owner": "integrator",
       "requires_explicit_scope_extension": true
@@ -311,7 +312,8 @@
       ],
       "acceptance": [
         "Write safety review",
-        "Lost-response scenario verified",
+        "Lost-response scenario verified on local synthetic mocks; no agent real Jira writes",
+        "Live evidence separates user-reported manual actions from agent-observed read state and remaining gaps",
         "No exactly-once or approval overclaims"
       ],
       "acceptance_owner": "integrator",

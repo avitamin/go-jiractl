@@ -18,6 +18,14 @@ Bootstrap: version-команды, локальная конфигурация, 
 
 ## 2. Роли и настройки
 
+### Постоянная граница Jira для агентов
+
+Для всех агентов реальная Jira всегда read-only, включая test и sandbox. Запрещены любые mutations через CLI, MCP, HTTP, browser, scripts и delegation; credentials, approval digest и текст задачи не дают права записи. Локальные unit/mock tests с synthetic data разрешены.
+
+Если будущая продуктовая write-функция требует серверной проверки, агент готовит инструкцию с target, expected result и check. Изменение, повтор, исправление и cleanup выполняет пользователь вручную; агент ждёт сообщения о выполнении, затем только читает и проверяет результат. Отчёт разделяет сообщение пользователя, наблюдаемое состояние и непроверенные свойства: совпадение состояния не доказывает авторство или отсутствие дублей. Это ограничение разработки не отменяет proposed product write-функции T09–T12 и не переносится в runtime Skill.
+
+Guard hooks `.codex/hooks.json` и `scripts/jira_read_only_hook.py`, проверяемые `make hooks-test`, дополняют правило: `SessionStart`/`SubagentStart` напоминают его, `PreToolUse` блокирует распознаваемые Jira-вызовы. Их требуется вручную доверить через `/hooks`; они не являются абсолютной изоляцией. Ограничения: arbitrary code, `write_stdin`, сбой запуска hook и неподдержанные tool paths. Не менять существующие пользовательские safety settings и не утверждать active enforcement без отдельной проверки.
+
 | Роль | Модель / effort | Работа | Не поручать |
 |---|---|---|---|
 | Integrator, основной Codex | Sol / medium по умолчанию; high для contracts/security gates | Решения, contracts, декомпозиция, review расхождений, merge и release verdict | Рутинный обход всех endpoint files |
@@ -130,9 +138,9 @@ Synthetic Jira DC responses: обычные и длинные issues, custom fie
 
 **T10 — Change plan/ledger.** Sol + Sol security review: immutable payload/digest/TTL/principal, profile write policy, atomic ledger, expected state, bounded reconcile. Зависит от T09. Gate: wrong digest/profile/stale state reject; concurrent apply; crash before/after send; outcome_unknown never retries. Документирован residual TOCTOU, не обещан exactly-once.
 
-**T11 — Шесть write operations.** Sol: create, update, assign, transition, comment.add, link.create поверх T10. Handler registry не имеет generic bypass. До live tests только mocks. Gate: planned payload = applied payload, permissions/screens/required fields, explicit null, partial/ambiguous responses. В sandbox Jira разрешение даётся на конкретные тестовые изменения.
+**T11 — Шесть write operations.** Sol: create, update, assign, transition, comment.add, link.create поверх T10. Handler registry не имеет generic bypass. До серверных тестов — только локальные mocks с synthetic data. Gate: planned payload = applied payload, permissions/screens/required fields, explicit null, partial/ambiguous responses. Серверный write-test выполняет пользователь вручную по инструкции агента с target, expected result и check; агент только читает результат.
 
-**T12 — Write acceptance.** Независимый Sol reviewer + Sol. Sandbox E2E, receipts, side effects, retries disabled, evidence after simulated response loss. Документировать отсутствие bulk/rollback и пределы approval digest. Только после gate поддержка записи становится accepted.
+**T12 — Write acceptance.** Независимый Sol reviewer + Sol. Пользователь вручную выполняет sandbox E2E по инструкции агента; агент читает receipts и side effects, проверяет evidence after simulated response loss и не исполняет write, исправления или cleanup. Retries disabled. Документировать отсутствие bulk/rollback и пределы approval digest. Только после gate поддержка записи становится accepted.
 
 ## 6. Расширение reference coverage
 
@@ -142,7 +150,7 @@ E01 Agile reads/writes; E02 worklogs/watchers/comment editing; E03 versions/comp
 
 ## 7. CI и доказательства
 
-Текущая bootstrap CI: `make check` (gofmt, go vet, unit/subprocess tests, race, tidy -diff, build). После T01 расширить её: schema/golden cases, security-canary, deterministic fault-injection, чистая сборка/запуск. Эти продуктовые gates ещё не реализованы. Интеграционные live Jira тесты opt-in и protected; PR от forks не получает PAT. Модельные eval — отдельный protected job с фиксированными budgets; routine unit CI не зависит от LLM.
+Текущая bootstrap CI: `make check` (gofmt, go vet, unit/subprocess tests, race, tidy -diff, build). После T01 расширить её: schema/golden cases, security-canary, deterministic fault-injection, чистая сборка/запуск. Эти продуктовые gates ещё не реализованы. Автоматизированные agent tests используют только локальные mocks и synthetic data; серверная write acceptance выполняется пользователем вручную. Read-only live Jira probes остаются отдельными opt-in/protected проверками; PR от forks не получает PAT. Модельные eval — отдельный protected job с фиксированными budgets; routine unit CI не зависит от LLM.
 
 Тестовый отчёт указывает commit, tool/package versions, command, start/end, exit code и artifact hash. Ручной Markdown «PASS» не substitute. Integrator сравнивает actual git diff с ownership и пересоздаёт aggregate status после merge. Одна bounded reconciliation round исправляет stale handoffs; не начинать с нуля весь workflow.
 
