@@ -30,7 +30,7 @@
       "title": "Reference and deployment preflight",
       "owner_role": "integrator",
       "depends_on": [],
-      "status": "pending",
+      "status": "accepted",
       "allowed_paths": [
         "planning/reference-inventory.json",
         "planning/coverage.json",
@@ -52,7 +52,7 @@
       "depends_on": [
         "T00"
       ],
-      "status": "pending",
+      "status": "accepted",
       "allowed_paths": [
         "contracts/**",
         "docs/**",
@@ -79,12 +79,12 @@
       "depends_on": [
         "T01"
       ],
-      "status": "pending",
+      "status": "rework",
       "allowed_paths": [
         "internal/config/**",
         "internal/adapters/http/**",
         "internal/security/**",
-        "tests/unit/transport/**"
+        "tests/e2e/**"
       ],
       "acceptance": [
         "TLS/context path/redirect tests pass",
@@ -102,12 +102,11 @@
       "depends_on": [
         "T01"
       ],
-      "status": "pending",
+      "status": "ready_for_review",
       "allowed_paths": [
         "internal/output/**",
         "internal/store/**",
-        "tests/unit/output/**",
-        "tests/unit/store/**"
+        "internal/cli/export_linux_test.go"
       ],
       "acceptance": [
         "Byte budget and Unicode safe",
@@ -120,19 +119,21 @@
     {
       "id": "T04",
       "stage": "v0.1",
-      "title": "Fixtures and baseline harness",
-      "owner_role": "fixture_writer",
+      "title": "Jira mock, wire fixtures and baseline harness",
+      "owner_role": "implementer",
       "depends_on": [
         "T01"
       ],
-      "status": "pending",
+      "status": "in_progress",
       "allowed_paths": [
+        "internal/testjira/**",
         "tests/fixtures/**",
         "tests/golden/**",
         "bench/**"
       ],
       "acceptance": [
-        "Synthetic deterministic corpus",
+        "Required mock self-tests JM-A01…JM-A10",
+        "Synthetic deterministic corpus and independent Jira wire fixtures",
         "Tuned/default MCP baselines recorded",
         "No fabricated usage numbers"
       ],
@@ -149,14 +150,18 @@
         "T03",
         "T04"
       ],
-      "status": "pending",
+      "status": "rework",
       "allowed_paths": [
-        "internal/application/read/**",
-        "internal/adapters/jira_dc/read/**",
-        "internal/cli/read/**",
-        "tests/integration/read/**"
+        "internal/application/read.go",
+        "internal/application/read_test.go",
+        "internal/application/sections.go",
+        "internal/cli/reads.go",
+        "internal/cli/artifacts.go",
+        "internal/adapters/http/**",
+        "tests/e2e/**"
       ],
       "acceptance": [
+        "Real executable subprocess and required read cases",
         "Real CLI JSON exit stderr tests",
         "No hidden writes",
         "Fields and pagination preserve facts"
@@ -172,13 +177,16 @@
       "depends_on": [
         "T05"
       ],
-      "status": "pending",
+      "status": "rework",
       "allowed_paths": [
-        "internal/application/snapshot/**",
-        "internal/cli/snapshot/**",
-        "tests/snapshot/**"
+        "internal/application/snapshot.go",
+        "internal/application/snapshot_test.go",
+        "internal/cli/snapshots.go",
+        "internal/store/**",
+        "tests/e2e/**"
       ],
       "acceptance": [
+        "Required snapshot resume and local-read E2E cases",
         "100 issue deterministic capture",
         "Resume completed units not refetched",
         "Partial and false-deletion tests"
@@ -194,7 +202,7 @@
       "depends_on": [
         "T06"
       ],
-      "status": "pending",
+      "status": "in_progress",
       "allowed_paths": [
         "skill/**",
         ".agents/skills/jira-context/**",
@@ -217,7 +225,7 @@
       "depends_on": [
         "T07"
       ],
-      "status": "pending",
+      "status": "blocked",
       "allowed_paths": [
         "docs/release-v0.1.md",
         "evidence/release-v0.1/**"

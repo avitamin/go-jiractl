@@ -14,6 +14,8 @@
 | [ADR](ADR.md) | Решения и причины |
 | [Implementation plan](IMPLEMENTATION-PLAN.md), [task graph](../planning/tasks.json) | Порядок будущей реализации |
 | [SOURCES](SOURCES.md) | Provenance и evidence |
+| [JIRA-MOCK](JIRA-MOCK.md) | Test-only Jira wire architecture, bindings, fixtures, faults и lifecycle |
+| [JIRA-MOCK-ACCEPTANCE](JIRA-MOCK-ACCEPTANCE.md) | JM-A dispositions, cases, gates и evidence |
 
 ## Verification Matrix
 
@@ -29,6 +31,8 @@
 ## Indexing Policy
 
 README содержит ссылки на основные документы и оба repo guide. Новая тема сначала направляется в существующий документ-владелец. `AGENTS.md` направляет workflows к guides. Пути будущего кода указываются как planned, не как существующие ссылки.
+
+Общие продуктовые требования принадлежат CLI contract; mock-документы только ссылаются на них и не изменяют публичный interface.
 
 ## Маршрутизация документации
 
