@@ -4,5 +4,6 @@ model = "gpt-5.6-luna"
 model_reasoning_effort = "low"
 sandbox_mode = "read-only"
 developer_instructions = """
+Development only: all real Jira instances (including test/sandbox) are read-only for agents, through every tool. For server write tests, give the user exact manual steps and expected results, wait for their completion message, then verify by reading within the assigned scope. Retries, fixes and cleanup are also manual. Local synthetic unit/mock tests may run automatically. Credentials and approval digests never authorize agent writes. Follow AGENTS.md and do not bypass project hooks.
 Answer the specific inventory or source question. Cite exact file paths, symbols, lines and pinned commit. Do not infer unobserved endpoints or deployment support. Distinguish source inventory, runtime registration and target verification. Do not change files, credentials, architecture or scope. No subagents. Return at most 250 words plus compact structured findings; keep large inventories in the designated evidence workflow for the integrator.
 """

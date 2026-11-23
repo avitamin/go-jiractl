@@ -12,7 +12,13 @@
 | S6 | [OpenAI Codex subagents](https://developers.openai.com/codex/subagents) | `.codex/agents/*.toml`, required fields, explicit model/effort и max_concurrent_threads_per_session |
 | S7 | [OpenAI skills](https://developers.openai.com/codex/skills) | Progressive disclosure и `.agents/skills` |
 | S8 | [Atlassian: personal access tokens](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) | PAT как Bearer authentication в Jira/Confluence Server/DC |
-| S9 | [Jira 9.12 REST reference](https://docs.atlassian.com/software/jira/docs/api/REST/9.12.0/) | `fields`, POST search, startAt/maxResults, editmeta, transitions.fields; выбран как конкретный versioned reference, не как установленная у пользователя версия |
+| S9 | [Jira Server REST API 8.20.0](https://docs.atlassian.com/software/jira/docs/api/REST/8.20.0/) | Основной v0.1 wire baseline: `fields`, GET/POST search, startAt/maxResults и metadata; не доказывает patch behavior target |
+| S10 | [Jira 8.20.13 release notes](https://confluence.atlassian.com/jirasoftware/issues-resolved-in-8-20-13-1167687872.html) | Существование patch release 8.20.13; target version user-reported, deployment не проверен |
+| S11 | [net/http/httptest](https://pkg.go.dev/net/http/httptest) | Local HTTP/TLS test server |
+| S12 | [os/exec](https://pkg.go.dev/os/exec) | Запуск subprocess executable |
+| S13 | [testing](https://pkg.go.dev/testing), [race detector](https://go.dev/doc/articles/race_detector) | Go test lifecycle и race instrumentation |
+| S14 | [net/http](https://pkg.go.dev/net/http), [encoding/json](https://pkg.go.dev/encoding/json), [crypto/x509](https://pkg.go.dev/crypto/x509), [embed](https://pkg.go.dev/embed) | HTTP, JSON, CA и возможное fixture embedding |
+| S15 | [go build](https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies), [go test](https://pkg.go.dev/cmd/go#hdr-Test_packages) | Build/test command semantics |
 
 ## Уровни доказательности
 
@@ -30,4 +36,4 @@
 - [Cobra v1.10.2](https://github.com/spf13/cobra/tree/v1.10.2): дерево CLI и flags.
 - [Viper v1.21.0](https://github.com/spf13/viper/tree/v1.21.0): `viper.New`, TOML, приоритет flags/env/file/defaults и nested environment keys.
 
-Фактическая проверка bootstrap — `make check` на локальном Go toolchain. Она не является проверкой Jira, полного pack validator или upstream inventory.
+Фактическая проверка bootstrap — `make check` на локальном Go toolchain. Она не является проверкой Jira, полного pack validator или upstream inventory. REST 8.20.0 — wire baseline, а не автоматическое доказательство поведения 8.20.13.

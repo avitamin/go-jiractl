@@ -1,0 +1,8 @@
+{
+  "description": "Development only: agents read Jira; users perform server mutations manually.",
+  "hooks": {
+    "SessionStart": [{"hooks": [{"type": "command", "command": "exit 2 # configure jiractl development hooks first", "timeout": 5}]}],
+    "SubagentStart": [{"hooks": [{"type": "command", "command": "exit 2 # configure jiractl development hooks first", "timeout": 5}]}],
+    "PreToolUse": [{"hooks": [{"type": "command", "command": "exit 2 # configure jiractl development hooks first", "timeout": 5}]}]
+  }
+}

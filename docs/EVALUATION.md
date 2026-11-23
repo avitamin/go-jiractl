@@ -18,6 +18,8 @@ C — jiractl + Skill: стандартный brief, targeted sections и artifa
 
 ## 3. Корпус
 
+Synthetic Jira wire corpus и его deterministic provenance принадлежат [JIRA-MOCK.md](JIRA-MOCK.md). Варианты A/B/C получают эквивалентные synthetic source facts; этот документ не дублирует fixture specification.
+
 | ID | Задача | Обязательные checks |
 |---|---|---|
 | B01 | Найти 25 issues, уточнить 2 descriptions | Правильные IDs, нужные факты, без default comments dump |

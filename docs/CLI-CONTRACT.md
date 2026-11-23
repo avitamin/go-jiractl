@@ -6,10 +6,9 @@
 
 Persistent flags: `--config PATH`, `--profile NAME`. Отдельный Viper на экземпляр root; profile по умолчанию `default`. Файл выбирается только через `--config`, иначе `os.UserConfigDir()/jiractl/config.toml`; `JIRACTL_CONFIG` не выбирает файл. Отсутствующий default допустим, отсутствующий explicit или некорректный TOML — ошибка. Значения: flags → `JIRACTL_*` → TOML → defaults; nested key dots заменяются на underscores. Cwd и .env не используются; PAT provider и сохранение конфигурации отсутствуют. Inline credential fields в TOML отклоняются до загрузки в основной Viper.
 
-**Остальные разделы ниже — proposed продуктовый контракт.** Jira-команды, JSON output, error taxonomy и transport ещё не реализованы.
+Следующие разделы описывают проектируемые команды v0.1 и v0.2.
 
-
-**Нормативная спецификация, Proposed.** `MUST` — обязательное поведение; `SHOULD` — рекомендуемое с документированным исключением. Версия executable и версия wire/schema независимы. Примеры ниже иллюстрируют **будущий**, пока не реализованный CLI.
+**Нормативная спецификация до release acceptance.** `MUST` — обязательное поведение; `SHOULD` — рекомендуемое с документированным исключением. Версия executable и версия wire/schema независимы. Разделы v0.2 остаются proposed и не реализованы.
 
 ## 1. Общая форма и discovery
 
@@ -28,6 +27,8 @@ Global options ставятся перед resource; command-specific options �
 | `--debug` | Только санитизированная диагностика в stderr; не HTTP bodies и не Authorization |
 
 `--help` и `--version` — явные text-mode исключения. Все остальные data-команды в json mode, включая ошибки CLI parsing, MUST вернуть один JSON object + LF. Не логировать в stdout. Abrupt SIGKILL/сбой ОС не может гарантировать envelope; caller учитывает ненулевой exit и отсутствие/невалидность JSON.
+
+T01: если команда ещё не распознана, envelope использует `command=cli.parse`, `data=null`, `meta.source=local`. При parsing/config-selection error `meta.profile` — валидное непустое выбранное имя, иначе literal `default` (без загрузки этого профиля). Невалидные format/max-bytes не отменяют JSON error: используется default budget. Не отражать argv, JQL или произвольный parser diagnostic в сообщении ошибки. Bootstrap version сохраняет существующий text/error contract.
 
 ```sh
 jiractl describe issues.search
@@ -62,6 +63,8 @@ artifact_quota_bytes = 1073741824
 MUST сохранить context path при сборке URL. MUST отказать URL с userinfo, неподдержанным scheme, query/fragment. HTTPS обязателен в production profile. Custom CA — вместо `verify=false`. По умолчанию redirects не следовать; same-origin redirect может быть отдельно разрешён trusted config после проверки context path. Никогда не переносить PAT на другой origin.
 
 `doctor --probe` выполняет только согласованные read probes: server info, current identity, минимальный доступ к search. Возвращает deployment/version/build/principal availability и ограничения, а не все пользовательские данные. 200 HTML от SSO proxy — protocol/authentication diagnostic, не успешный JSON-ответ. `/serverInfo` и `/myself` недоступны — отдельные состояния, а не догадка о версии.
+
+T01: без подтверждённого principal разрешены диагностика и inline reads, но создание Jira-derived artifacts/cursors/runs/snapshots возвращает `PRECONDITION_FAILED` (exit 7). Principal подтверждается по непустому Jira user `key` как `key:<raw key>`; при отсутствии key — по непустому `name` как `name:<raw name>`. Offline reads проверяют recorded namespace и выбранный profile/base URL без сети и без PAT. Cursor/resume дополнительно требуют текущего совпадающего principal. Значение PAT не участвует в namespace. Jira namespace имеет `kind=jira`, canonical base_url, profile, principal, schema_version; purely-local artifacts (`describe`) используют `kind=local`, profile, schema_version, без base_url/principal. Эти namespaces не взаимозаменяемы.
 
 ## 3. Общий envelope
 
@@ -118,6 +121,8 @@ MUST сохранить context path при сборке URL. MUST отказа�
 ```
 
 Spill — **не data truncation**, поэтому status остаётся ok, если source complete. Вывод не содержит часть JSON или незаметно потерянные строки. Нет автоматически урезанного description под видом полного. Artifact содержит выбранные поля, а не все существующие поля Jira; исходные тексты этих полей сохраняются без semantic summarization.
+
+T01: spill blob содержит JSON значения `data`, без внешнего envelope. `bytes` и `sha256` вычисляются по точным UTF-8 bytes blob. Namespace, provenance и исходные completeness metadata хранятся отдельно; targeted read сохраняет их смысл.
 
 Если source endpoint возвращает неполную запрошенную секцию, это partial/complete=false независимо от размещения. Если artifact нельзя безопасно сохранить, вернуть storage error; не выбрасывать данные в stdout вне budget. Envelope ошибки всегда небольшой. До записи в Jira проверить способность создать local journal/receipt; операция не должна зависеть от последующего вывода огромного payload.
 
@@ -180,6 +185,8 @@ jiractl snapshot diff s_0123456789abcdef0123456789abcdef s_abcdef0123456789abcde
 
 `run_ref=r_…` — mutable progress record, `snapshot_ref=s_…` — immutable manifest и ссылки на captured payloads. Resume создаёт новый final snapshot, не переписывает ранее опубликованный partial snapshot. Unit минимум issue+projection+section page; completed unit повторно не fetch-ится. Crash между HTTP response и persisted unit допускает повтор безопасного read.
 
+После завершения hydration выбранного membership run получает обычный retention, в том числе при `limited_by=source`: такой результат остаётся partial, но завершённые units уже не требуют recovery. Повторная оценка неизвестного исходного membership требует нового capture; resume не меняет зафиксированный membership. Snapshot manifests также имеют retention; только незавершённые runs удерживают зависимости вне срока.
+
 Manifest MUST включать:
 
 - instance/profile/principal namespace; schema/CLI version; query hash и reference на query input; selected immutable issue IDs;
@@ -188,6 +195,8 @@ Manifest MUST включать:
 - `selection_complete`: исчерпан ли весь источник; `limited_by`: `user|source|none`; `capture_complete`: все ли данные выбранного scope получены;
 - per-issue fetched_at/source.updated/hash, unavailable records и типизированные errors;
 - refs/checksums payloads и resume run_ref для незавершённой работы.
+
+T01: manifest содержит `cli_version`, nullable `first_observed_at`/`last_observed_at`, `records_sha256` и `scope.membership_sha256`. `records_ref` указывает на массив записей по планируемой record schema T01: field states, section completeness и descriptors страниц, fetched_at/source_updated, payload descriptor или null, типизированные errors. Null observation означает отсутствие успешного наблюдения. Синтетические нулевые checksums в examples — placeholders; исполняемые captures вычисляют реальные hashes. Проверки T01 должны подтвердить ссылки, hashes, counts и соответствие complete состояниям записей.
 
 `--max-issues 100` при 500 совпадениях — успешный ограниченный capture: selected=100, selection_complete=false, limited_by=user, capture_complete=true. Ошибка получения хотя бы одного выбранного issue или обязательной секции — status partial, exit 9, capture_complete=false. Никогда не превращать partial в ok флагом «разрешить ошибки».
 
@@ -272,6 +281,8 @@ Error object: `{code,message,retryable,details?,recovery?}`. `message` не со
 Если retryable read исчерпал лимит, retryable может быть true с backoff hint. Для outcome_unknown всегда false. Не преобразовывать любую upstream exception в пустой successful list.
 
 ## 9. Обязательные invariants для тестов
+
+Детальный нормативный план synthetic Jira wire/self-test/subprocess cases и их disposition находится в [Jira mock acceptance matrix](JIRA-MOCK-ACCEPTANCE.md); он не меняет команды, schema, exit codes или retry policy этого контракта.
 
 JSON stdout валиден и не превышает budget; Unicode и oversized single fields не ломают chunking. Spill сохраняет всё запрошенное; pagination и artifact continuation не теряют строки. Нет PAT в logs/fixtures/tracebacks и cross-origin requests. Null отличается от absent. Refs проверяются по namespace и checksum. Snapshot partial не превращается в ok; diff не выводит недоказанные удаления. Mutations не reachable в v0.1. Повтор apply не дублирует подтверждённую запись; ambiguous write не retry. Все перечисленные checks входят в release gates, а не только в текст Skill.
 ## 10. Metadata discovery v0.2

@@ -2,11 +2,13 @@
 
 Статус: Proposed. План ориентирован на небольшие законченные slices, не на максимальное количество агентов. Источник machine-readable задач — `planning/tasks.json`. Это **не готовый scheduler**, а входной план для Sol и команды.
 
-## 0. Выполненный scope bootstrap и отложенные инструменты
+## 0. Состояние реализации
 
-Bootstrap: version-команды, локальная конфигурация, Go-каркас, Makefile/CI и repo guides. T00–T08 остаются pending: bootstrap не означает принятие read-only v0.1.
+Реализованы Go bootstrap, version-команды и локальная конфигурация. Для v0.1 принят дизайн синтетического Jira mock. Реализация транспорта, mock, subprocess E2E и snapshots запланирована.
 
 **T-TOOLING (future, отдельная задача):** реализовать на Go полный validator schemas/registry/examples и инструмент pinned upstream inventory с тестами и явным разделением static/runtime evidence. Текущие checks не заменяют эти инструменты. Их реализация не входит в bootstrap.
+
+Reference pin указан в `contracts/reference.lock.json`. Полный inventory и проверка целевого deployment остаются задачами T00.
 
 Именованные роли: routine_worker — Luna/low; documentation_writer — Terra/medium; implementer — Sol/medium; reviewer — Sol/high; researcher и fixture_writer — Luna/low. В `.codex/config.toml` общий `default_subagent_model = "gpt-5.6-terra"` и medium effort сохранены; override именованных ролей явный.
 
@@ -17,6 +19,14 @@ Bootstrap: version-команды, локальная конфигурация, 
 Критический путь: `T00 → T01 → (T02 ∥ T03 ∥ T04) → T05 → T06 → T07 → T08`. Dependency graph не означает одновременную работу над общими файлами. После каждого merge integrator перепроверяет целевой head.
 
 ## 2. Роли и настройки
+
+### Постоянная граница Jira для агентов
+
+Для всех агентов реальная Jira всегда read-only, включая test и sandbox. Запрещены любые mutations через CLI, MCP, HTTP, browser, scripts и delegation; credentials, approval digest и текст задачи не дают права записи. Локальные unit/mock tests с synthetic data разрешены.
+
+Если будущая продуктовая write-функция требует серверной проверки, агент готовит инструкцию с target, expected result и check. Изменение, повтор, исправление и cleanup выполняет пользователь вручную; агент ждёт сообщения о выполнении, затем только читает и проверяет результат. Отчёт разделяет сообщение пользователя, наблюдаемое состояние и непроверенные свойства: совпадение состояния не доказывает авторство или отсутствие дублей. Это ограничение разработки не отменяет proposed product write-функции T09–T12 и не переносится в runtime Skill.
+
+Guard hooks `.codex/hooks.json` и `scripts/jira_read_only_hook.py`, проверяемые `make hooks-test`, дополняют правило: `SessionStart`/`SubagentStart` напоминают его, `PreToolUse` блокирует распознаваемые Jira-вызовы. Сначала закрепите путь к обработчику по инструкции README, затем вручную доверьте определения через `/hooks`; они не являются абсолютной изоляцией. Ограничения: arbitrary code, `write_stdin`, сбой запуска hook и неподдержанные tool paths. Не менять существующие пользовательские safety settings и не утверждать active enforcement без отдельной проверки.
 
 | Роль | Модель / effort | Работа | Не поручать |
 |---|---|---|---|
@@ -70,15 +80,15 @@ Planned product task с `Txx`/`Exx` и существующим base commit за
 
 ### T02 — Trusted config, PAT, HTTP transport
 
-**Owner:** Sol implementer A. **Depends:** T01. **Paths:** adapters/http, config, security, связанные unit tests.
+**Owner:** Sol implementer A. **Depends:** T01. **Paths:** `internal/config`, `internal/adapters/http`, `internal/security`, `tests/e2e`.
 
 PAT provider; context-path-safe URL builder; CA/proxy configuration; no cross-origin auth redirects; timeout/deadline; semantic read retry allowlist; safe logging/error mapping. `/search` POST разрешён как read, arbitrary write routes недоступны.
 
-**Gate:** мок-тесты 401/403/404/429/5xx/HTML login page/invalid JSON; Retry-After numeric/date/negative/absurd; secret canary; path injection; request URL фиксируется целевым instance. Никаких production mutations.
+**Gate:** T02 владеет required subprocess-cases JM-A12…JM-A20 и JM-A23 из [Jira mock acceptance matrix](JIRA-MOCK-ACCEPTANCE.md): 401/403/404/429/5xx/HTML/invalid JSON, Retry-After, canary, path injection. Никаких production mutations.
 
 ### T03 — Output codec, refs и local store
 
-**Owner:** Sol implementer B. **Depends:** T01. **Paths:** output, store, соответствующие tests.
+**Owner:** Sol implementer B. **Depends:** T01. **Paths:** `internal/output`, `internal/store`, планируемые `*_test.go` и `internal/cli/export_linux_test.go`.
 
 JSON envelope/errors; byte budget; lossless spill; range reads; immutable publication/checksum; SQLite manifests/checkpoints interface; namespace; retention/quota. `artifact prune` по умолчанию только preview. Сохранение text Unicode без разрыва JSON.
 
@@ -86,25 +96,25 @@ JSON envelope/errors; byte budget; lossless spill; range reads; immutable public
 
 ### T04 — Fixture corpus и baseline harness
 
-**Owner:** Luna fixture writer для механических данных; Sol принимает harness. **Depends:** T01. **Paths:** tests/fixtures, tests/golden, bench.
+**Owner:** Sol implementer. Luna fixture writer — только contributor механических fixture-данных; Sol владеет harness и принимает результат. **Depends:** T01. **Paths:** `internal/testjira`, tests/fixtures, tests/golden, bench.
 
-Synthetic Jira DC responses: обычные и длинные issues, custom fields/null, paginated comments, hidden issue, weird keys, API caps, partial capture. Положить сценарии оценки, recorder stdout/stderr/request counts. Настроенный и default MCP baseline выполняются отдельно от runtime CLI, с тем же corpus/permissions.
+Создать `internal/testjira`, wire corpus, recorder и self-tests JM-A01…JM-A10. Synthetic Jira DC responses: обычные и длинные issues, custom fields/null, paginated comments, hidden issue, weird keys, API caps, partial capture. Положить сценарии оценки, recorder stdout/stderr/request counts. Настроенный и default MCP baseline выполняются отдельно от runtime CLI, с тем же corpus/permissions.
 
 **Gate:** fixtures не содержат production data/secrets; expected values объяснимы; smoke fixture generator детерминирован; benchmark сохраняет config/tokenizer/model IDs. Luna не проектирует критерии fairness самостоятельно.
 
 ### T05 — Первый vertical read slice
 
-**Owner:** Sol implementer; Sol интегрирует. **Depends:** T02,T03,T04. **Paths:** application/read, adapters/jira_dc/read, cli/read, integration tests.
+**Owner:** Sol implementer; Sol интегрирует. **Depends:** T02,T03,T04. **Paths:** `internal/application/read.go`, `internal/application/sections.go`, `internal/cli/reads.go`, `internal/cli/artifacts.go`, `internal/adapters/http`, `tests/e2e`.
 
-`doctor`, `capabilities`, `describe`, `issue get`, `issues search`, `fields search`, `issue section` для description/comments/links/attachment metadata. Brief/analysis DTO, strict field selection, safe identities, live vs local provenance. Сначала один `issue get` end-to-end, затем search и секции.
+`doctor`, `capabilities`, `describe`, `issue get`, `issues search`, `fields search`, `issue section`, artifacts и первый executable slice. Brief/analysis DTO, strict field selection, safe identities, live vs local provenance. Первый slice: real `jiractl` executable → production HTTP adapter → local TLS testjira → contract stdout/stderr/exit → offline artifact read after spill.
 
-**Gate:** реальные invocation subprocess tests проверяют stderr/stdout/exit codes, не только service methods. Ни `*all`, ни comments/changelog без запроса. Server page cap и continuation корректны. Read-only suite доказывает отсутствие write dispatch. Начальный target smoke при наличии разрешённого окружения.
+**Gate:** настоящий executable subprocess и required read cases из matrix; не только service methods. Ни `*all`, ни comments/changelog без запроса. Server page cap и continuation корректны. Read-only suite доказывает отсутствие write dispatch. Начальный target smoke при наличии разрешённого окружения.
 
 ### T06 — Snapshot, resume, targeted read, diff
 
-**Owner:** Sol implementer. **Depends:** T05. **Paths:** application/snapshot, store/checkpoint integration, cli/snapshot, tests/snapshot.
+**Owner:** Sol implementer. **Depends:** T05. **Paths:** `internal/application/snapshot.go`, `internal/cli/snapshots.go`, `internal/store`, `tests/e2e`.
 
-Детерминированная membership/hydration, bounded concurrency, explicit max, progress checkpoint, immutable manifests, snapshots refs, local section reads, structural diff. Capture использует уже доступные fields, не fetch-ит каждый issue второй раз без причины.
+Required snapshot/create/resume/show/read/diff E2E cases, deterministic membership/hydration, bounded concurrency, explicit max, progress checkpoint, immutable manifests, snapshots refs, local section reads, structural diff. Capture использует уже доступные fields, не fetch-ит каждый issue второй раз без причины.
 
 **Gate:** corpus 100 issues; cancellation + resume; duplicate IDs; issue removed/permission changed; changing updated/order; cap comments; one item failure → partial9; snapshot comparison при неполных scopes не выдаёт false deletions. Ни одного model call внутри capture/diff. После resume завершённые units не запрашиваются повторно.
 
@@ -122,7 +132,7 @@ Synthetic Jira DC responses: обычные и длинные issues, custom fie
 
 Проверить security и trust boundary; публичный CLI/help против registry; full tests на integration head; сборку и запуск Go-бинарника в clean environment; read-only deployment smoke и ограниченный 100-issue test в разрешённом scope. Не выкладывать внутренние snapshots в CI artifacts публичного repo.
 
-**Gate:** все v0.1 criteria выполнены; documented target matrix; benchmark actual numbers; реальные evidence paths/SHAs. Без live validation можно принять offline milestone, но не заявлять verified support вашей Jira. На этом остановить первый проход.
+**Gate:** независимый rerun, disposition audit и verdicts; все v0.1 criteria выполнены; documented target matrix; benchmark actual numbers; реальные evidence paths/SHAs. Без live validation можно принять offline milestone, но не заявлять verified support вашей Jira. На этом остановить первый проход.
 
 ## 5. Задачи v0.2 — только после отдельного разрешения scope
 
@@ -130,9 +140,9 @@ Synthetic Jira DC responses: обычные и длинные issues, custom fie
 
 **T10 — Change plan/ledger.** Sol + Sol security review: immutable payload/digest/TTL/principal, profile write policy, atomic ledger, expected state, bounded reconcile. Зависит от T09. Gate: wrong digest/profile/stale state reject; concurrent apply; crash before/after send; outcome_unknown never retries. Документирован residual TOCTOU, не обещан exactly-once.
 
-**T11 — Шесть write operations.** Sol: create, update, assign, transition, comment.add, link.create поверх T10. Handler registry не имеет generic bypass. До live tests только mocks. Gate: planned payload = applied payload, permissions/screens/required fields, explicit null, partial/ambiguous responses. В sandbox Jira разрешение даётся на конкретные тестовые изменения.
+**T11 — Шесть write operations.** Sol: create, update, assign, transition, comment.add, link.create поверх T10. Handler registry не имеет generic bypass. До серверных тестов — только локальные mocks с synthetic data. Gate: planned payload = applied payload, permissions/screens/required fields, explicit null, partial/ambiguous responses. Серверный write-test выполняет пользователь вручную по инструкции агента с target, expected result и check; агент только читает результат.
 
-**T12 — Write acceptance.** Независимый Sol reviewer + Sol. Sandbox E2E, receipts, side effects, retries disabled, evidence after simulated response loss. Документировать отсутствие bulk/rollback и пределы approval digest. Только после gate поддержка записи становится accepted.
+**T12 — Write acceptance.** Независимый Sol reviewer + Sol. Пользователь вручную выполняет sandbox E2E по инструкции агента; агент читает receipts и side effects, проверяет evidence after simulated response loss и не исполняет write, исправления или cleanup. Retries disabled. Документировать отсутствие bulk/rollback и пределы approval digest. Только после gate поддержка записи становится accepted.
 
 ## 6. Расширение reference coverage
 
@@ -142,7 +152,7 @@ E01 Agile reads/writes; E02 worklogs/watchers/comment editing; E03 versions/comp
 
 ## 7. CI и доказательства
 
-Текущая bootstrap CI: `make check` (gofmt, go vet, unit/subprocess tests, race, tidy -diff, build). После T01 расширить её: schema/golden cases, security-canary, deterministic fault-injection, чистая сборка/запуск. Эти продуктовые gates ещё не реализованы. Интеграционные live Jira тесты opt-in и protected; PR от forks не получает PAT. Модельные eval — отдельный protected job с фиксированными budgets; routine unit CI не зависит от LLM.
+Текущая bootstrap CI: `make check` (gofmt, go vet, unit/subprocess tests, race, tidy -diff, build). После T01 расширить её: schema/golden cases, security-canary, deterministic fault-injection, чистая сборка/запуск. Эти продуктовые gates ещё не реализованы. Автоматизированные agent tests используют только локальные mocks и synthetic data; серверная write acceptance выполняется пользователем вручную. Read-only live Jira probes остаются отдельными opt-in/protected проверками; PR от forks не получает PAT. Модельные eval — отдельный protected job с фиксированными budgets; routine unit CI не зависит от LLM.
 
 Тестовый отчёт указывает commit, tool/package versions, command, start/end, exit code и artifact hash. Ручной Markdown «PASS» не substitute. Integrator сравнивает actual git diff с ownership и пересоздаёт aggregate status после merge. Одна bounded reconciliation round исправляет stale handoffs; не начинать с нуля весь workflow.
 

@@ -33,11 +33,11 @@ Stage только просмотренных файлов, относящихс
 
 ## Git Commit Gate
 
-Перед разрешённым commit проверить формат branch и subject конфигурацией [`.agents/git-commit-gate.json`](../.agents/git-commit-gate.json). В текущей bootstrap-политике именованная группа `issue_key` намеренно захватывает пустую строку: у репозитория нет обязательного Jira key. Поэтому без явного требования Jira key запускать checker без `--issue-key`, например:
+Перед разрешённым commit проверить формат branch и subject конфигурацией [`.agents/git-commit-gate.json`](../.agents/git-commit-gate.json). В текущей bootstrap-политике именованная группа `issue_key` намеренно захватывает пустую строку: у репозитория нет обязательного Jira key. Поэтому без явного требования Jira key запускать checker без `--issue-key` из корня своего checkout, например:
 
 ```bash
-python3 /home/avi/.agents/skills/prepare-repo-commit/scripts/check_git_commit_gate.py \
-  --repo-root /home/avi/GolandProjects/jiractl \
+python3 "$HOME/.agents/skills/prepare-repo-commit/scripts/check_git_commit_gate.py" \
+  --repo-root "$PWD" \
   --commit-subject 'chore: bootstrap Go CLI'
 ```
 

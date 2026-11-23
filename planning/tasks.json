@@ -84,7 +84,7 @@
         "internal/config/**",
         "internal/adapters/http/**",
         "internal/security/**",
-        "tests/unit/transport/**"
+        "tests/e2e/**"
       ],
       "acceptance": [
         "TLS/context path/redirect tests pass",
@@ -106,8 +106,7 @@
       "allowed_paths": [
         "internal/output/**",
         "internal/store/**",
-        "tests/unit/output/**",
-        "tests/unit/store/**"
+        "internal/cli/export_linux_test.go"
       ],
       "acceptance": [
         "Byte budget and Unicode safe",
@@ -120,19 +119,21 @@
     {
       "id": "T04",
       "stage": "v0.1",
-      "title": "Fixtures and baseline harness",
-      "owner_role": "fixture_writer",
+      "title": "Jira mock, wire fixtures and baseline harness",
+      "owner_role": "implementer",
       "depends_on": [
         "T01"
       ],
       "status": "pending",
       "allowed_paths": [
+        "internal/testjira/**",
         "tests/fixtures/**",
         "tests/golden/**",
         "bench/**"
       ],
       "acceptance": [
-        "Synthetic deterministic corpus",
+        "Required mock self-tests JM-A01…JM-A10",
+        "Synthetic deterministic corpus and independent Jira wire fixtures",
         "Tuned/default MCP baselines recorded",
         "No fabricated usage numbers"
       ],
@@ -151,12 +152,16 @@
       ],
       "status": "pending",
       "allowed_paths": [
-        "internal/application/read/**",
-        "internal/adapters/jira_dc/read/**",
-        "internal/cli/read/**",
-        "tests/integration/read/**"
+        "internal/application/read.go",
+        "internal/application/read_test.go",
+        "internal/application/sections.go",
+        "internal/cli/reads.go",
+        "internal/cli/artifacts.go",
+        "internal/adapters/http/**",
+        "tests/e2e/**"
       ],
       "acceptance": [
+        "Real executable subprocess and required read cases",
         "Real CLI JSON exit stderr tests",
         "No hidden writes",
         "Fields and pagination preserve facts"
@@ -174,11 +179,14 @@
       ],
       "status": "pending",
       "allowed_paths": [
-        "internal/application/snapshot/**",
-        "internal/cli/snapshot/**",
-        "tests/snapshot/**"
+        "internal/application/snapshot.go",
+        "internal/application/snapshot_test.go",
+        "internal/cli/snapshots.go",
+        "internal/store/**",
+        "tests/e2e/**"
       ],
       "acceptance": [
+        "Required snapshot resume and local-read E2E cases",
         "100 issue deterministic capture",
         "Resume completed units not refetched",
         "Partial and false-deletion tests"
@@ -291,7 +299,8 @@
       "acceptance": [
         "Only approved supported write operations dispatch",
         "Metadata payload parity",
-        "Sandbox E2E separately authorized"
+        "Server E2E: user executes manual write steps; agent waits for completion then verifies by reads",
+        "Retries fixes and cleanup are manual user actions; automated write tests use local synthetic mocks only"
       ],
       "acceptance_owner": "integrator",
       "requires_explicit_scope_extension": true
@@ -311,7 +320,8 @@
       ],
       "acceptance": [
         "Write safety review",
-        "Lost-response scenario verified",
+        "Lost-response scenario verified on local synthetic mocks; no agent real Jira writes",
+        "Live evidence separates user-reported manual actions from agent-observed read state and remaining gaps",
         "No exactly-once or approval overclaims"
       ],
       "acceptance_owner": "integrator",
