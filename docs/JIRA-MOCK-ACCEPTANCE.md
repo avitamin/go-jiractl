@@ -55,8 +55,8 @@
 | JM-A44 | snapshots | required | matching 404 after freeze → partial/unavailable, not deletion | R03,R05,R07 | T06 | not_run |
 | JM-A45 | snapshots | required | A→B/partial/incompatible → immutable A, honest diff | R05,R07 | T06 | not_run |
 | JM-A46 | snapshots | required | local read/diff with stopped mock/sentinel → 0 HTTP | R06,R07 | T06 | not_run |
-| JM-A47 | local_store | not_applicable: owned by T03 existing `internal/store/*_test.go` | quota/disk/publish faults → store contract, not mock E2E | R07 | T03 | not_run |
-| JM-A48 | local_store | not_applicable: owned by T03 `internal/store/*_test.go` and `internal/cli/export_linux_test.go` | corrupt/cross-profile refs/export policy → store contract, not mock E2E | R07 | T03 | not_run |
+| JM-A47 | local_store | not_applicable: owned by T03 planned `internal/store/*_test.go` | quota/disk/publish faults → store contract, not mock E2E | R07 | T03 | not_run |
+| JM-A48 | local_store | not_applicable: owned by T03 planned `internal/store/*_test.go` and `internal/cli/export_linux_test.go` | corrupt/cross-profile refs/export policy → store contract, not mock E2E | R07 | T03 | not_run |
 | JM-A49 | local_cli | required | `describe` IDs/unknown → contract summary/error, 0 HTTP | R07 | T05 | not_run |
 | JM-A50.1 | local_cli | required | offline `doctor` → validates config, 0 HTTP | R07 | T05 | not_run |
 | JM-A50.2 | core_cli | required | `doctor --probe` → only serverInfo/myself/minimal search, output/journal | R02,R07 | T05 | not_run |

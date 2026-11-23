@@ -8,7 +8,7 @@ import re
 import shlex
 import sys
 from dataclasses import dataclass
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 
 REMINDER = (
     "При разработке jiractl любые реальные Jira, включая test/sandbox, агентам "
@@ -25,7 +25,7 @@ MAX_INPUT = 1024 * 1024
 MAX_PYTHON_CODE = 64 * 1024
 MAX_PYTHON_NODES = 4096
 REPO_ROOT = posixpath.dirname(posixpath.dirname(posixpath.abspath(__file__)))
-COMMIT_GATE_SCRIPT = "/home/avi/.agents/skills/prepare-repo-commit/scripts/check_git_commit_gate.py"
+COMMIT_GATE_SCRIPT = str(Path.home() / ".agents/skills/prepare-repo-commit/scripts/check_git_commit_gate.py")
 
 # Deliberately small static list; no get_* heuristic or trust in tool annotations.
 # Names are present in planning/coverage.seed.json (published reference S1).
@@ -98,12 +98,14 @@ def cli_allowed(args):
         option = args[0]
         if option in {"--version", "--help", "-h"}:
             return len(args) == 1
-        if option in {"--config", "--profile", "--format", "--max-bytes"}:
+        if option == "--debug":
+            args = args[1:]
+        elif option in {"--deadline-seconds", "--config", "--profile", "--format", "--max-bytes"}:
             if len(args) < 2:
                 return False
             args = args[2:]
         elif any(option.startswith(key + "=") for key in (
-            "--config", "--profile", "--format", "--max-bytes"
+            "--config", "--profile", "--format", "--max-bytes", "--deadline-seconds"
         )):
             args = args[1:]
         else:
@@ -113,7 +115,9 @@ def cli_allowed(args):
     if args[0] in CLI_SINGLE:
         return True
     pair = tuple(args[:2])
-    if pair == ("artifact", "prune") and "--apply" in args:
+    if pair == ("artifact", "prune") and any(
+        arg == "--apply" or arg.startswith("--apply=") for arg in args[2:]
+    ):
         return False  # Repository development also forbids agent cleanup.
     return pair in CLI_PAIRS
 
@@ -267,7 +271,7 @@ def commit_gate_allowed(args):
     # Audited local helper: reads gate config and invokes only git rev-parse /
     # branch --show-current. No generic permission for skill scripts. Changes
     # to this external helper require reviewing its operation classification.
-    if not args or args[0] != COMMIT_GATE_SCRIPT:
+    if not posixpath.isabs(COMMIT_GATE_SCRIPT) or not args or args[0] != COMMIT_GATE_SCRIPT:
         return False
     options = {}
     index = 1
@@ -434,7 +438,7 @@ def main():
         result = evaluate(json.loads(raw))
     except Exception:
         result = deny(INVALID)  # Never echo potentially sensitive exception/input.
-    print(json.dumps(result, ensure_ascii=False))
+    print(json.dumps(result, ensure_ascii=True))
 
 
 if __name__ == "__main__":

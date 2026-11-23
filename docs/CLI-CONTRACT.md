@@ -6,8 +6,7 @@
 
 Persistent flags: `--config PATH`, `--profile NAME`. Отдельный Viper на экземпляр root; profile по умолчанию `default`. Файл выбирается только через `--config`, иначе `os.UserConfigDir()/jiractl/config.toml`; `JIRACTL_CONFIG` не выбирает файл. Отсутствующий default допустим, отсутствующий explicit или некорректный TOML — ошибка. Значения: flags → `JIRACTL_*` → TOML → defaults; nested key dots заменяются на underscores. Cwd и .env не используются; PAT provider и сохранение конфигурации отсутствуют. Inline credential fields в TOML отклоняются до загрузки в основной Viper.
 
-**Остальные разделы ниже — нормативный продуктовый контракт до приёмки v0.1.** Read-команды, JSON output, transport, artifacts и snapshot core реализованы в рабочем дереве; проверенные результаты и открытые gates перечислены в README и implementation plan. Присутствие команды не доказывает target compatibility или завершение всех release gates.
-
+Следующие разделы описывают проектируемые команды v0.1 и v0.2.
 
 **Нормативная спецификация до release acceptance.** `MUST` — обязательное поведение; `SHOULD` — рекомендуемое с документированным исключением. Версия executable и версия wire/schema независимы. Разделы v0.2 остаются proposed и не реализованы.
 
@@ -197,7 +196,7 @@ Manifest MUST включать:
 - per-issue fetched_at/source.updated/hash, unavailable records и типизированные errors;
 - refs/checksums payloads и resume run_ref для незавершённой работы.
 
-T01: manifest содержит `cli_version`, nullable `first_observed_at`/`last_observed_at`, `records_sha256` и `scope.membership_sha256`. `records_ref` указывает на массив записей по `contracts/snapshot-record.schema.json`: field states, section completeness и descriptors страниц, fetched_at/source_updated, payload descriptor или null, типизированные errors. Null observation означает отсутствие успешного наблюдения. Синтетические нулевые checksums в examples — placeholders; исполняемые captures вычисляют реальные hashes. Semantic tests проверяют ссылки, hashes, counts и соответствие complete состояниям записей.
+T01: manifest содержит `cli_version`, nullable `first_observed_at`/`last_observed_at`, `records_sha256` и `scope.membership_sha256`. `records_ref` указывает на массив записей по планируемой record schema T01: field states, section completeness и descriptors страниц, fetched_at/source_updated, payload descriptor или null, типизированные errors. Null observation означает отсутствие успешного наблюдения. Синтетические нулевые checksums в examples — placeholders; исполняемые captures вычисляют реальные hashes. Проверки T01 должны подтвердить ссылки, hashes, counts и соответствие complete состояниям записей.
 
 `--max-issues 100` при 500 совпадениях — успешный ограниченный capture: selected=100, selection_complete=false, limited_by=user, capture_complete=true. Ошибка получения хотя бы одного выбранного issue или обязательной секции — status partial, exit 9, capture_complete=false. Никогда не превращать partial в ok флагом «разрешить ошибки».
 

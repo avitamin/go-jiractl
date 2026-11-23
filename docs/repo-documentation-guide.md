@@ -16,6 +16,7 @@
 | [SOURCES](SOURCES.md) | Provenance и evidence |
 | [JIRA-MOCK](JIRA-MOCK.md) | Test-only Jira wire architecture, bindings, fixtures, faults и lifecycle |
 | [JIRA-MOCK-ACCEPTANCE](JIRA-MOCK-ACCEPTANCE.md) | JM-A dispositions, cases, gates и evidence |
+| [Deployment preflight](deployment-profile.md) | Целевое окружение и статус deployment-проверок |
 
 ## Verification Matrix
 

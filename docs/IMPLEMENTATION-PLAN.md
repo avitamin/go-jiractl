@@ -2,17 +2,13 @@
 
 Статус: Proposed. План ориентирован на небольшие законченные slices, не на максимальное количество агентов. Источник machine-readable задач — `planning/tasks.json`. Это **не готовый scheduler**, а входной план для Sol и команды.
 
-## 0. Реализованный, но не принятый progress и отложенные инструменты
+## 0. Состояние реализации
 
-В рабочем дереве есть implementation progress сверх bootstrap: trusted profile с `pat_env`, fixed read-only HTTP transport, JSON envelope и local artifact store, targeted reads, snapshot create/resume/show/read/diff и локальный artifact export/prune. `artifact prune --apply` реализован с transitive pin protection; tests используют fake unlink, а реальный пользовательский state store агентом не очищался. `--format human` пока выдаёт JSON rendering. `capabilities` не является полным cache и сохраняет `unknown` для target operations до probe.
-
-После принятия mock design статусы: T02 — `rework`, T03 — `ready_for_review`, T04 — `in_progress`, T05 — `rework`, T06 — `rework`, T08 — `blocked`. Причина `rework`: обязательные reusable mock и настоящий subprocess E2E ещё не подтверждены evidence. v0.1 не принят.
-
-Bootstrap: version-команды, локальная конфигурация, Go-каркас, Makefile/CI и repo guides. Реализованный progress не отменяет release gates T00–T08.
+Реализованы Go bootstrap, version-команды и локальная конфигурация. Для v0.1 принят дизайн синтетического Jira mock. Реализация транспорта, mock, subprocess E2E и snapshots запланирована.
 
 **T-TOOLING (future, отдельная задача):** реализовать на Go полный validator schemas/registry/examples и инструмент pinned upstream inventory с тестами и явным разделением static/runtime evidence. Текущие checks не заменяют эти инструменты. Их реализация не входит в bootstrap.
 
-Текущий pinned checkout — `/tmp/reference-checkout.aahOG1` на `22369b76d6c1775a9730ba7d7cb37d49f7da671a`; это не полный inventory: static extraction и runtime registration не подтверждены. Model benchmark/agent eval, live Jira validation, runtime Skill installation и Windows ACL verification также остаются gates, а не закрытыми результатами.
+Reference pin указан в `contracts/reference.lock.json`. Полный inventory и проверка целевого deployment остаются задачами T00.
 
 Именованные роли: routine_worker — Luna/low; documentation_writer — Terra/medium; implementer — Sol/medium; reviewer — Sol/high; researcher и fixture_writer — Luna/low. В `.codex/config.toml` общий `default_subagent_model = "gpt-5.6-terra"` и medium effort сохранены; override именованных ролей явный.
 
@@ -30,7 +26,7 @@ Bootstrap: version-команды, локальная конфигурация, 
 
 Если будущая продуктовая write-функция требует серверной проверки, агент готовит инструкцию с target, expected result и check. Изменение, повтор, исправление и cleanup выполняет пользователь вручную; агент ждёт сообщения о выполнении, затем только читает и проверяет результат. Отчёт разделяет сообщение пользователя, наблюдаемое состояние и непроверенные свойства: совпадение состояния не доказывает авторство или отсутствие дублей. Это ограничение разработки не отменяет proposed product write-функции T09–T12 и не переносится в runtime Skill.
 
-Guard hooks `.codex/hooks.json` и `scripts/jira_read_only_hook.py`, проверяемые `make hooks-test`, дополняют правило: `SessionStart`/`SubagentStart` напоминают его, `PreToolUse` блокирует распознаваемые Jira-вызовы. Их требуется вручную доверить через `/hooks`; они не являются абсолютной изоляцией. Ограничения: arbitrary code, `write_stdin`, сбой запуска hook и неподдержанные tool paths. Не менять существующие пользовательские safety settings и не утверждать active enforcement без отдельной проверки.
+Guard hooks `.codex/hooks.json` и `scripts/jira_read_only_hook.py`, проверяемые `make hooks-test`, дополняют правило: `SessionStart`/`SubagentStart` напоминают его, `PreToolUse` блокирует распознаваемые Jira-вызовы. Сначала закрепите путь к обработчику по инструкции README, затем вручную доверьте определения через `/hooks`; они не являются абсолютной изоляцией. Ограничения: arbitrary code, `write_stdin`, сбой запуска hook и неподдержанные tool paths. Не менять существующие пользовательские safety settings и не утверждать active enforcement без отдельной проверки.
 
 | Роль | Модель / effort | Работа | Не поручать |
 |---|---|---|---|
@@ -92,7 +88,7 @@ PAT provider; context-path-safe URL builder; CA/proxy configuration; no cross-or
 
 ### T03 — Output codec, refs и local store
 
-**Owner:** Sol implementer B. **Depends:** T01. **Paths:** `internal/output`, `internal/store`, связанные реальные `*_test.go` и `internal/cli/export_linux_test.go`.
+**Owner:** Sol implementer B. **Depends:** T01. **Paths:** `internal/output`, `internal/store`, планируемые `*_test.go` и `internal/cli/export_linux_test.go`.
 
 JSON envelope/errors; byte budget; lossless spill; range reads; immutable publication/checksum; SQLite manifests/checkpoints interface; namespace; retention/quota. `artifact prune` по умолчанию только preview. Сохранение text Unicode без разрыва JSON.
 

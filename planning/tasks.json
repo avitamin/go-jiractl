@@ -30,7 +30,7 @@
       "title": "Reference and deployment preflight",
       "owner_role": "integrator",
       "depends_on": [],
-      "status": "accepted",
+      "status": "pending",
       "allowed_paths": [
         "planning/reference-inventory.json",
         "planning/coverage.json",
@@ -52,7 +52,7 @@
       "depends_on": [
         "T00"
       ],
-      "status": "accepted",
+      "status": "pending",
       "allowed_paths": [
         "contracts/**",
         "docs/**",
@@ -79,7 +79,7 @@
       "depends_on": [
         "T01"
       ],
-      "status": "rework",
+      "status": "pending",
       "allowed_paths": [
         "internal/config/**",
         "internal/adapters/http/**",
@@ -102,7 +102,7 @@
       "depends_on": [
         "T01"
       ],
-      "status": "ready_for_review",
+      "status": "pending",
       "allowed_paths": [
         "internal/output/**",
         "internal/store/**",
@@ -124,7 +124,7 @@
       "depends_on": [
         "T01"
       ],
-      "status": "in_progress",
+      "status": "pending",
       "allowed_paths": [
         "internal/testjira/**",
         "tests/fixtures/**",
@@ -150,7 +150,7 @@
         "T03",
         "T04"
       ],
-      "status": "rework",
+      "status": "pending",
       "allowed_paths": [
         "internal/application/read.go",
         "internal/application/read_test.go",
@@ -177,7 +177,7 @@
       "depends_on": [
         "T05"
       ],
-      "status": "rework",
+      "status": "pending",
       "allowed_paths": [
         "internal/application/snapshot.go",
         "internal/application/snapshot_test.go",
@@ -202,7 +202,7 @@
       "depends_on": [
         "T06"
       ],
-      "status": "in_progress",
+      "status": "pending",
       "allowed_paths": [
         "skill/**",
         ".agents/skills/jira-context/**",
@@ -225,7 +225,7 @@
       "depends_on": [
         "T07"
       ],
-      "status": "blocked",
+      "status": "pending",
       "allowed_paths": [
         "docs/release-v0.1.md",
         "evidence/release-v0.1/**"

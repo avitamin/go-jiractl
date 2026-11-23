@@ -15,8 +15,8 @@
 | Module / Go | `github.com/avitamin/go-jiractl` / `1.27.1` |
 | Entrypoint / executable | `cmd/jiractl` / `jiractl` |
 | Contract / registry | `docs/CLI-CONTRACT.md` / `contracts/commands.json` |
-| Production adapter | `internal/adapters/http` |
-| Reads / snapshots | `internal/application/read.go`, `internal/application/sections.go` / `internal/application/snapshot.go` |
+| Planned production adapter | `internal/adapters/http` |
+| Planned reads / snapshots | `internal/application/read.go`, `internal/application/sections.go` / `internal/application/snapshot.go` |
 | Planned mock / E2E | `internal/testjira` / `tests/e2e` |
 | Fixtures | normalized: `tests/fixtures`; wire: `internal/testjira/testdata` |
 | Isolation | `--config PATH`, `XDG_STATE_HOME`, profile `pat_env`, synthetic `SYNTHETIC_PAT`, `ca_bundle` |
@@ -33,7 +33,7 @@ go build \
 
 ## JM-R02. Wire surface
 
-Только текущий allowlist: `GET /rest/api/2/serverInfo`, `GET /rest/api/2/myself`, `GET /rest/api/2/field`, `GET /rest/api/2/issue/{keyOrId}`, `GET|POST /rest/api/2/search`, `GET /rest/api/2/issue/{keyOrId}/comment`. Base URL уже может содержать context path; обязательны пустой path и `/jira`. POST search остаётся read. Любой иной method/route — violation; новый endpoint требует CLI capability и источник wire shape. Fallback на real host запрещён.
+Планируемый allowlist: `GET /rest/api/2/serverInfo`, `GET /rest/api/2/myself`, `GET /rest/api/2/field`, `GET /rest/api/2/issue/{keyOrId}`, `GET|POST /rest/api/2/search`, `GET /rest/api/2/issue/{keyOrId}/comment`. Base URL уже может содержать context path; обязательны пустой path и `/jira`. POST search остаётся read. Любой иной method/route — violation; новый endpoint требует CLI capability и источник wire shape. Fallback на real host запрещён.
 
 ## JM-R03. Exact matching
 
@@ -41,9 +41,9 @@ Method, context path и route сравниваются точно; query — п�
 
 ## JM-R04. Каталог, страницы и corpus
 
-JQL parser не реализуется. Каталог хранит exact `project = SYN ORDER BY key ASC`, subset, empty, Unicode/quotes/`&`/spaces-in-literals, long POST и invalid JQL→400; known query заранее сортирует IDs. Основной corpus: 100 issues, CLI limit 25, server cap 7, 15 data-page responses; probes/retries отдельно. `SYN-42` имеет 137 comments и cap 50; source-limit corpus — 500.
+JQL parser не реализуется. Каталог хранит exact `project = SYN ORDER BY key ASC`, subset, empty, Unicode/quotes/`&`/spaces-in-literals, long POST и invalid JQL→400; known query заранее сортирует IDs. Основной corpus: 100 issues, размер запрашиваемой страницы 25 при общем лимите выборки 100, server cap 7, 15 data-page responses; probes/retries отдельно. `SYN-42` имеет 137 comments и cap 50; source-limit corpus — 500.
 
-`tests/fixtures` остаётся нормализованным application слоем. `internal/testjira/testdata` — независимые Jira REST wire responses: вручную reviewable малые JSON plus deterministic Go generator 100/500 без random и production normalizer. `SYN-1…SYN-100`; `SYN-1` содержит UTF-8 description ≥64 KiB, `SYN-42` — 137 comments, кириллицу/казахские символы/emoji, wiki и `{{...}}`, newlines, null/absent/empty/`0`/`false`, nested custom JSON, integer > safe JavaScript integer, equal display names, directed links и attachment metadata без binary. Manifest фиксирует revision, inputs, hashes, case IDs, basis и gaps; его wire basis — [Jira Server REST API 8.20.0](SOURCES.md), а не доказательство поведения user-reported target `8.20.13`.
+`tests/fixtures` планируется как нормализованный application слоем. `internal/testjira/testdata` — независимые Jira REST wire responses: вручную reviewable малые JSON plus deterministic Go generator 100/500 без random и production normalizer. `SYN-1…SYN-100`; `SYN-1` содержит UTF-8 description ≥64 KiB, `SYN-42` — 137 comments, кириллицу/казахские символы/emoji, wiki и `{{...}}`, newlines, null/absent/empty/`0`/`false`, nested custom JSON, integer > safe JavaScript integer, equal display names, directed links и attachment metadata без binary. Manifest фиксирует revision, inputs, hashes, case IDs, basis и gaps; его wire basis — [Jira Server REST API 8.20.0](SOURCES.md), а не доказательство поведения user-reported target `8.20.13`.
 
 ## JM-R05. Typed API, state и journal
 

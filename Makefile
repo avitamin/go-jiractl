@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := build
+
 GO ?= go
 VERSION ?= dev
 

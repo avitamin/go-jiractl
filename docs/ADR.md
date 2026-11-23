@@ -2,7 +2,7 @@
 
 Standalone status **Accepted** имеют только ADR-002 и ADR-011 по утверждённому handoff пользователя. Остальные ADR сохраняют standalone status **Proposed**.
 
-T01, 2026-09-06: для read-only v0.1 приняты только указанные границы ADR-001, ADR-003–006, read-only части ADR-007 и ADR-008/010; это scoped acceptance, не смена standalone status этих ADR. Нормативные уточнения помечены T01 в CLI contract. Write-решения, включая write-часть ADR-007, остаются proposed. Shared DTO находятся в `internal/domain`; JSON Schema examples проверяются Go tests пакета `contracts` с закреплённым `github.com/google/jsonschema-go v0.3.0`. Это focused contract tests, а не полный validator/inventory из T-TOOLING. Primary владеет contracts/domain/dependency lock/CLI integration; T02 — config/transport/security; T03 — output/store; T04 — synthetic fixtures/bench.
+T01, 2026-09-06: для read-only v0.1 приняты только указанные границы ADR-001, ADR-003–006, read-only части ADR-007 и ADR-008/010; это scoped acceptance, не смена standalone status этих ADR. Нормативные уточнения помечены T01 в CLI contract. Write-решения, включая write-часть ADR-007, остаются proposed.
 
 ## ADR-001. CLI + Skill вместо обязательного MCP runtime
 
@@ -22,7 +22,7 @@ T01, 2026-09-06: для read-only v0.1 приняты только указан�
 
 **Контекст.** Go знаком владельцу проекта. Upstream mcp-atlassian реализован на Python [S2], но остаётся behavioral reference без runtime-зависимости.
 
-**Решение.** Модуль `github.com/avitamin/go-jiractl`; Go 1.27.1, Cobra v1.10.2, Viper v1.21.0. Версии закрепляются в `go.mod`, checksums — в `go.sum`. Entrypoint — `cmd/jiractl`; `internal/cli`, `internal/config`, `internal/buildinfo` реализуют bootstrap. Каждый root получает собственный Viper. Слой `cli → application → domain ports → Jira DC HTTP adapter` использует Go structs, `encoding/json`, `net/http` и `httptest`; fixed read transport существует в рабочем дереве, но reusable Jira mock ещё отсутствует.
+**Решение.** Модуль `github.com/avitamin/go-jiractl`; Go 1.27.1, Cobra v1.10.2, Viper v1.21.0. Версии закрепляются в `go.mod`, checksums — в `go.sum`. Entrypoint — `cmd/jiractl`; `internal/cli`, `internal/config`, `internal/buildinfo` реализуют bootstrap. Каждый root получает собственный Viper. Слой `cli → application → domain ports → Jira DC HTTP adapter` использует Go structs, `encoding/json`, `net/http` и `httptest`; HTTP transport и reusable Jira mock запланированы.
 
 **Альтернативы.** TypeScript и CLI-прокси к MCP. Выбран Go с учётом опыта владельца, компиляции в бинарник и стандартной библиотеки. Импорт upstream internals связывал бы runtime с чужими внутренними API.
 

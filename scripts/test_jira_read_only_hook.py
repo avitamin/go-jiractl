@@ -8,6 +8,7 @@ import sys
 import unittest
 from unittest.mock import patch
 
+import configure_dev_hooks
 import jira_read_only_hook as hook
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,9 +32,11 @@ class PolicyTest(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertEqual({}, self.decision("exec_command", {"cmd": command}))
 
+    @patch.object(hook, "REPO_ROOT", "/synthetic/jiractl")
+    @patch.object(hook, "COMMIT_GATE_SCRIPT", "/synthetic/commit-gate.py")
     def test_commit_gate_is_a_scoped_local_check(self):
-        helper = "/home/avi/.agents/skills/prepare-repo-commit/scripts/check_git_commit_gate.py"
-        base = f"python3 {helper} --repo-root {ROOT}"
+        helper = hook.COMMIT_GATE_SCRIPT
+        base = f"python3 {helper} --repo-root {hook.REPO_ROOT}"
         for suffix in (
             "", " --json", " --branch chore/read-only-development-hooks --json",
             " --commit-subject 'fix(hooks): classify Jira path arguments' --json",
@@ -58,13 +61,15 @@ class PolicyTest(unittest.TestCase):
             "tool_input": {"cmd": base},
         })))
 
+    @patch.object(hook, "REPO_ROOT", "/synthetic/jiractl")
+    @patch.object(hook, "COMMIT_GATE_SCRIPT", "/synthetic/commit-gate.py")
     def test_commit_gate_profile_rejects_other_execution_and_composition(self):
-        helper = "/home/avi/.agents/skills/prepare-repo-commit/scripts/check_git_commit_gate.py"
-        base = f"python3 {helper} --repo-root {ROOT}"
+        helper = hook.COMMIT_GATE_SCRIPT
+        base = f"python3 {helper} --repo-root {hook.REPO_ROOT}"
         mutation = "jiractl change apply p_synthetic"
         commands = [
             base.replace(helper, "/tmp/check_git_commit_gate.py"),
-            base.replace(str(ROOT), str(ROOT) + "-other"),
+            base.replace(hook.REPO_ROOT, hook.REPO_ROOT + "-other"),
             base.replace("python3", "uv run python3", 1),
             base.replace("python3", "/tmp/python3", 1),
             "PYTHONPATH=/tmp/synthetic " + base,
@@ -262,6 +267,7 @@ class PolicyTest(unittest.TestCase):
             "python3 -c 'import requests; requests.delete(\"https://jira.invalid/x\")'",
             "sudo curl -X DELETE https://jira.invalid/x",
             "jiractl artifact prune --apply",
+            "jiractl artifact prune --apply=true",
         ]
         for command in commands:
             with self.subTest(command=command):
@@ -346,17 +352,30 @@ class PolicyTest(unittest.TestCase):
             self.assertTrue(self.blocked(json.loads(result.stdout)))
             self.assertLess(len(result.stdout), 1024)
 
+    def test_contract_global_flags_preserve_command_classification(self):
+        for args in (["--debug", "version"], ["--deadline-seconds=60", "issue", "get"],
+                     ["--deadline-seconds", "60", "snapshot", "show"]):
+            self.assertTrue(hook.cli_allowed(args))
+        self.assertFalse(hook.cli_allowed(["--debug", "change", "apply"]))
+        self.assertFalse(hook.cli_allowed(["--deadline-seconds"]))
+
     def test_registered_hook_commands_offline(self):
         config = json.loads((ROOT / ".codex/hooks.json").read_text())
-        self.assertEqual({"SessionStart", "SubagentStart", "PreToolUse"}, set(config["hooks"]))
-        for event_name, groups in config["hooks"].items():
-            handler = groups[0]["hooks"][0]
-            self.assertNotIn("matcher", groups[0])
-            self.assertNotIn("async", handler)
+        # Additional user hooks stay intact and are never executed by this test.
+        extra = {"matcher": "^OtherTool$", "hooks": [{"type": "command", "command": "user-hook"}]}
+        config["hooks"].setdefault("Stop", []).append(extra)
+        config["hooks"]["PreToolUse"].insert(0, extra)
+        configure_dev_hooks.render(config, SCRIPT)
+        self.assertEqual(extra, config["hooks"]["PreToolUse"][0])
+        self.assertIn(extra, config["hooks"]["Stop"])
+        expected_command = f"python3 -I {shlex.quote(str(SCRIPT))} || exit 2"
+        for event_name in configure_dev_hooks.EVENTS:
+            registered = [hook["command"] for group in config["hooks"][event_name]
+                          for hook in group["hooks"] if hook.get("command") == expected_command]
+            self.assertEqual([expected_command], registered)
             event = {"hook_event_name": event_name, "tool_name": "Bash", "tool_input": {"command": "jiractl change apply p_synthetic"}}
-            # Execute only the registered checker, feeding a fictional tool event.
-            result = subprocess.run(["sh", "-c", handler["command"]], input=json.dumps(event),
-                                    text=True, capture_output=True, cwd="/tmp", check=False)
+            result = subprocess.run(["sh", "-c", expected_command], input=json.dumps(event),
+                                    text=True, capture_output=True, cwd="/tmp", timeout=5, check=False)
             self.assertEqual(0, result.returncode, result.stderr)
             self.assertEqual("", result.stderr)
             output = json.loads(result.stdout)
